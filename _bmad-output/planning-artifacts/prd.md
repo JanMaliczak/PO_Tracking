@@ -21,319 +21,364 @@ classification:
 
 # Product Requirements Document - PO_Tracking
 
-**Author:** J.maliczak
+**Author:** J.maliczak  
 **Date:** 2026-02-11
 
 ## Executive Summary
 
 ### Vision
 
-PO Timeline & Batch Tracker is a self-hosted, cross-firewall web application that replaces the current Excel-based workflow for purchase order tracking between expeditors in China and planners in Europe. It becomes the single operational truth for PO milestones, batch-level deliveries, and change history across two incompatible ERPs.
+PO Timeline and Batch Tracker is a self-hosted cross-firewall web application that replaces the Excel-based PO tracking workflow between expeditors in China and planners in Europe. It becomes the operational source of truth for PO milestones, batch-level deliveries, and change history across two incompatible ERPs.
 
 ### Problem
 
-Two aging ERPs represent the PO lifecycle in incompatible ways. The supplier ERP overwrites PO line state on each update, destroying audit history. Neither system captures why dates change, who provided updates, or when information was received. Expeditors spend 2.5+ days per week manually compiling Excel files. Planners discover delays days after they occur. There is no accountability trail.
+Two legacy ERPs model PO lifecycle differently and neither provides trustworthy milestone history. The supplier ERP overwrites line state, destroying historical context. Weekly Excel exchange consumes major expeditor capacity and delays planner reaction. Teams cannot reliably answer who changed what, when, and why.
 
 ### Solution
 
-A server-rendered MPA (Django + HTMX, FastAPI, MS SQL) hosted on Alibaba Cloud (China) with a European read-replica, providing:
+The product provides:
 
-- **Nightly ERP ingestion** with snapshot+diff change detection and historical batch reconstruction
-- **Structured milestone recording** with mandatory source classification (Supplier confirmed / Expeditor estimate / No supplier response)
-- **Exception-first dashboard** for planners to identify delays without scanning thousands of rows
-- **Excel download tool** replacing the manual ERP export + split workflow
-- **Append-only audit trail** for every change â€” who, when, what, why
+- Nightly ERP ingestion with snapshot and diff change detection
+- Structured milestone recording with mandatory source classification
+- Exception-first planner views for late and at-risk lines
+- Supplier-request Excel generation to replace manual split workflows
+- Append-only audit trail for every operational change
 
 ### Key Differentiator
 
-Cross-firewall by design, audit-grade accountability, zero vendor dependency. Purpose-built for China-Europe operations where commercial SaaS solutions fail at the network boundary.
+Designed for China-Europe operations across network boundaries, with audit-grade accountability and no vendor dependency.
 
 ### Target Users
 
 | Role | Location | Primary Need |
-|------|----------|-------------|
-| Expeditor (Wei) | China (3 users) | Record supplier updates with structured input; generate Excel requests |
-| Planner (Katrin) | Europe (3 users) | Exception dashboard; self-service PO investigation with audit trail |
-| Admin (J.maliczak) | Europe (1 user) | System operations: ingestion monitoring, user/xref management |
-| Management | Europe (read-only) | Phase 2: OTIF dashboards, supplier scorecards |
+|------|----------|--------------|
+| Expeditor (Wei) | China | Structured supplier update capture and request generation |
+| Planner (Katrin) | Europe | Fast exception detection and self-service PO investigation |
+| Admin (J.maliczak) | Europe | Ingestion monitoring, access control, xref and config management |
+| Management | Europe | Phase 2 KPI visibility and rollout readiness confidence |
 
+## Success Criteria
+
+### User Success
+
+- Expeditor weekly data cycle reduced from 2.5+ days to <= 1 day
+- Planner delay detection reduced to <= 1 day from status change
+- 100% of milestone updates captured with date, reason, and source
+- 100% of active PO lines visible with audit traceability
+
+### Business Success
+
+- All three expeditors use the system daily within 4 weeks
+- Zero weekly operational Excel handoff from China to Europe within 6 weeks
+- 100% coverage of active PO lines for onboarded suppliers
+- Data quality sufficient for Phase 2 KPI dashboards by month 12
+
+### Technical Success
+
+- Nightly ingestion completes in <= 1 hour and >= 95% success over rolling 30 days
+- Key list/detail interactions meet performance targets in NFR1-NFR4
+- Availability supports 00:00-18:00 UTC operational window
+
+### Measurable Outcomes
+
+| Outcome | Baseline | Target (3 months) | Measurement |
+|---------|----------|-------------------|-------------|
+| Expeditor weekly data cycle | 2.5+ days | <= 1 day | Time from first request to full supplier update completion |
+| Planner delay detection | 3-5+ days | <= 1 day | Time between delay entry and planner visibility |
+| Weekly Excel handoffs | Dozens | 0 | Operational process observation |
+| Audit-covered PO updates | 0% | 100% | Audit completeness query |
+| Ingestion success | N/A | >= 95% | Job monitoring logs |
 
 ## Product Scope & Phased Development
 
 ### MVP Strategy
 
-**Approach:** Problem-solving MVP â€” deliver the complete workflow replacement for Excel-based PO tracking. The 9 core features form an indivisible unit; partial delivery breaks the value chain and prevents adoption validation.
+Deliver a complete Excel-replacement workflow as a coherent MVP unit. Prioritize operational simplicity and low maintenance with proven components.
 
-**Resource model:** Solo developer/admin (J.maliczak). Prioritize proven, low-maintenance technology choices (Django + HTMX, MS SQL, FastAPI) over cutting-edge options. Infrastructure simplicity is a first-class requirement.
-
-**Language decision:** English-only MVP confirmed viable. Expeditors have sufficient English proficiency for a structured UI. Chinese Simplified UI is Phase 2 â€” high priority but not a launch blocker.
-
-### MVP Feature Set (Phase 1) â€” All 9 Required
+### MVP Feature Set (Phase 1) - All 9 Required
 
 | # | Feature | Day-One Justification |
 |---|---------|----------------------|
-| 1 | ERP Data Ingestion | No data = no system. Nightly snapshot+diff with change event generation and historical batch reconstruction |
-| 2 | PO List View | Primary interface for both expeditors and planners. Filterable, sortable, with exception indicators and role-scoped views |
-| 3 | PO Detail View | Timeline of date changes, batch delivery table, status history, milestone editing |
-| 4 | Milestone Date Recording | Structured input with mandatory source field â€” solves the accountability problem |
-| 5 | Batch Tracking | Historical reconstruction for day-one insights; planned batches enable forward-looking workflow |
-| 6 | Excel Download Tool | Replaces manual ERP export + split workflow â€” direct expeditor time savings |
-| 7 | Status Model | Planned â†’ In Production â†’ Ready to Dispatch â†’ Part Delivered â†’ Fully Delivered â†’ Cancelled/Closed |
-| 8 | Authentication & Authorization | Local auth, role-based access (Expeditor, Planner, Admin) with supplier scoping |
-| 9 | Admin Functions | User/role management, item xref mapping, ingestion monitoring, audit log viewer, system config |
-
-**MVP rationale**: These 9 features form an indivisible unit â€” removing any one breaks the core value chain. Without ingestion there's no data; without the list view there's no visibility; without milestone recording there's no audit trail; without Excel download expeditors can't communicate with suppliers; without batch tracking there's no delivery granularity; without auth there's no accountability.
-
-**Historical batch reconstruction rationale:** Reconstructing batch history from ERP DeliveredQty + InDate records at go-live is essential. Without it, the system launches with zero context about delivery patterns, making the PO detail timeline empty and the exception dashboard blind to existing delays.
+| 1 | ERP Data Ingestion | No reliable operations without baseline data and change detection |
+| 2 | PO List View | Primary interface for planner and expeditor daily work |
+| 3 | PO Detail View | Required for timeline/audit/batch-level investigation |
+| 4 | Milestone Date Recording | Core accountability mechanism |
+| 5 | Batch Tracking | Required for partial-delivery reality |
+| 6 | Excel Download Tool | Immediate expeditor time savings |
+| 7 | Status Model | Shared operational language across users |
+| 8 | Authentication and Authorization | Role security and data scoping |
+| 9 | Admin Functions | Operability and long-term maintainability |
 
 ### Core User Journeys Supported (MVP)
 
-All 5 documented journeys are fully supported:
-1. Wei's Monday Morning â€” weekly supplier update cycle
-2. Wei's Accountability Challenge â€” source field and audit trail
-3. Katrin's Daily Check â€” exception dashboard
-4. J.maliczak's Admin Day â€” system operations
-5. Day One Setup â€” first-time ingestion and onboarding
+1. Wei weekly supplier cycle
+2. Wei accountability challenge
+3. Katrin daily exception review
+4. Admin operational control day
+5. Day-one bootstrap and first sync
+6. Management visibility readiness checkpoint
 
-### Phase 2 â€” Expand Reach (Months 4-6)
+### Phase 2 - Expand Reach (Months 4-6)
 
-- Chinese Simplified UI (i18n) â€” high priority to reduce expeditor friction
-- Supplier portal with batch proposal engine (confirm/adjust/reject workflow)
-- Management dashboards â€” OTIF, delay rates, supplier reliability scorecards
-- Customer ERP integration â€” cross-check baseline, ETD/ETA signals
-- WeChat integration â€” structured request/response for sub-supplier communication
+- Chinese Simplified UI
+- Supplier collaboration enhancements
+- Management KPI dashboards
+- Additional ERP cross-check integration
 
-### Phase 3 â€” Intelligence Layer (Months 7-12)
+### Phase 3 - Intelligence Layer (Months 7-12)
 
-- Rules-based batch proposal engine (auto-suggest next batch dates)
-- ML quantile forecasting â€” batch date prediction, risk scoring
-- CDC real-time ingestion (Debezium/SQL Server CDC)
-- Advanced alerting â€” configurable delay thresholds, supplier non-response rules
-- Entra ID authentication â€” replace local auth with Azure AD SSO
+- Rules plus ML forecasting for batch timing
+- Near-real-time ingestion options
+- Advanced alerting and predictive risk scoring
 
-### Phase 4 â€” Platform Potential (12-24 months)
+## User Journeys
 
-- Multi-site / multi-ERP deployment
-- WeChat miniapp for direct supplier input
-- ERP write-back capabilities
-- Container-level tracking and reconciliation
+### Journey 1: Wei's Monday Morning - Weekly Supplier Cycle
 
-### Risk Mitigation Strategy
+Wei opens the app, filters by supplier urgency, generates supplier request files in minutes, and records responses with required source and reasons. The cycle shifts from spreadsheet coordination to operational expediting.
 
-**Technical Risks:**
+**Requirements Revealed:**
+- Fast supplier filtering and sorting
+- Per-supplier Excel generation
+- Structured update capture with required fields
+- Completion visibility for weekly workflow
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| **Dual-DB sync failure** (highest risk) | Critical | Launch China-only (single Alibaba DB) first. Add European replica as fast-follow once core app is validated. Manual fallback: nightly DB backup transfer via VPN. |
-| ERP ingestion logic errors | High | Build and test ingestion against real ERP data in isolation. Comprehensive logging and dry-run mode. Validate reconstruction against known delivery records. |
-| Historical batch reconstruction accuracy | Medium | Spot-check reconstructed batches against known PO lines. Flag anomalies (overdelivery, negative remaining) as first-class alerts. |
-| Solo developer bottleneck | Medium | Leverage mature stack (Django, FastAPI, MS SQL). Avoid custom infrastructure. Prioritize operational simplicity. |
+### Journey 2: Wei's Accountability Challenge - Source Integrity
 
-**Market/Adoption Risks:**
+When suppliers do not respond, Wei must record updates as estimate or no response. This preserves visibility and avoids hidden optimism bias.
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Expeditor resistance to new tool | High | Involve Wei in early testing. Excel download tool must work flawlessly from day one. |
-| Data quality during transition | Medium | Run parallel (Excel + app) for 2-4 weeks. Compare outputs to build confidence. |
-| Planner skepticism about data freshness | Low | "Last updated" timestamps and source indicators build trust organically. |
+**Requirements Revealed:**
+- Mandatory source classification
+- Clear visual distinction of source quality
+- Staleness and no-response indicators
+- Append-only auditability for coaching and governance
 
-**Resource Risks:**
+### Journey 3: Katrin's Daily Check - Exception Dashboard
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Solo developer capacity | High | Build incrementally (ingestion â†’ list view â†’ detail view â†’ data entry â†’ Excel download â†’ admin). Internal testing before all 9 are complete. |
-| Infrastructure maintenance burden | Medium | Windows-native stack avoids Docker complexity. MS SQL and IIS are well-understood in-house. |
-| Scope creep during development | Medium | PRD defines clear MVP boundaries. Any new request evaluated against "does this break the value chain?" test. |
+Katrin starts the day with a focused late/at-risk list, drills into PO details, and acts without waiting for asynchronous clarification loops.
 
-**Dual-DB De-Risking Strategy (recommended):**
-1. **Development + initial launch:** Single Alibaba Cloud DB. European users accept cross-firewall latency (~500ms+).
-2. **Post-launch validation:** Add European read-replica with nightly sync once core app is stable.
-3. **Fallback:** Manual nightly DB backup transfer via VPN satisfies the â‰¤ 1 day freshness requirement.
+**Requirements Revealed:**
+- Exception-first default views
+- Rich PO detail timeline and batch context
+- Fast filtering by delay/state/source freshness
 
+### Journey 4: J.maliczak's Admin Day - System Operations
 
-### Journey 2: Wei's Accountability Challenge â€” The "Protection" Problem (Critical Edge Case)
+Admin verifies ingestion health, resolves xref gaps, manages access scopes, and reviews audit patterns.
 
-**Scene**: Wednesday 2:00 PM in Shenzhen. Supplier B hasn't responded about 15 PO lines due next week.
+**Requirements Revealed:**
+- Ingestion health dashboard
+- Xref mapping management
+- User and role administration
+- Audit log filtering and analysis
 
-**The Old Way** (before): Wei would either leave the cells blank in her Excel (hoping Katrin doesn't notice), or fill in optimistic dates that the supplier hasn't confirmed â€” "protecting" her supplier relationship by hiding the problem. Katrin receives the Excel on Thursday and has no way to know which dates are real confirmations vs. Wei's guesses. The deception only surfaces weeks later when goods don't arrive.
+### Journey 5: Day One Setup - First-Time System Activation
 
-**The New Way**:
+Admin configures ingestion and performs first baseline snapshot. Users log in with immediate historical context and begin operational use.
 
-1. **Wednesday 2:00 PM â€” Non-Response Visible**: Wei's dashboard shows 15 PO lines for Supplier B still marked as "awaiting update." The system knows these haven't been updated since last week's ERP sync. The status is visible to everyone â€” there's no way to hide it.
+**Requirements Revealed:**
+- Baseline sync mode
+- Historical batch reconstruction
+- Xref gap visibility and safe handling
+- Configurable ingestion schedule and lookback
 
-2. **Wei's Dilemma**: Wei wants to enter optimistic dates to avoid pressure from Katrin. But the system requires a **source field** for every update:
-   - "Supplier confirmed" (means supplier actually responded)
-   - "Expeditor estimate" (Wei's best guess â€” flagged differently in the system)
-   - "No supplier response" (honest status)
+### Journey 6: Management Visibility Readiness - Monthly Operational Review (Phase 2 Prep)
 
-3. **The Accountability Mechanism**: If Wei marks dates as "Supplier confirmed" but the supplier later misses, the audit trail shows Wei entered a confirmation that wasn't real. Over time, this pattern becomes visible in the data. The system doesn't prevent Wei from entering data â€” but it makes every entry *traceable and auditable*.
+Management reviews evidence on coverage, freshness, and reliability before approving KPI dashboard rollout.
 
-4. **The Better Outcome**: Wei marks the 15 lines as "No supplier response" and adds a note: "WeChat sent Monday, no reply. Will follow up Thursday." Katrin sees this in Europe and knows exactly what's happening â€” no surprises. She can factor the risk into her planning.
+**Requirements Revealed:**
+- Monthly readiness evidence package
+- Reliable trend visibility from operational logs
+- Clear rollout decision support signals
 
-5. **Escalation Path**: If Supplier B remains non-responsive for 2+ cycles, the pattern is clear in the data. Management can see which suppliers are chronically unresponsive â€” something that was invisible in the Excel world.
-
-**Climax**: The first time Katrin says "I can see Supplier B hasn't responded â€” let's escalate together" instead of discovering a missed delivery 2 weeks late, trust between China and Europe improves. Wei realizes that honest reporting protects *her* more than hiding problems.
-
-**Requirements Revealed**:
-- **Source field** on every update: "Supplier confirmed" / "Expeditor estimate" / "No supplier response"
-- Visual distinction in UI between confirmed vs. estimated vs. no-response statuses
-- "Last updated" timestamp visible on every PO line (staleness detection)
-- Non-response tracking: PO lines not updated within X days are flagged
-- Audit trail that makes patterns of inaccurate reporting discoverable over time
-- Notes/comments field for context on each update
-
-
-### Journey 4: J.maliczak's Admin Day â€” System Operations
-
-**Scene**: Wednesday 7:00 AM in Europe. J.maliczak checks the system before the team starts working.
-
-1. **7:00 AM â€” Ingestion Check**: Opens the admin panel. Last night's ERP sync shows: "Completed at 02:47 AM, duration: 38 minutes. 4,230 PO lines processed. 87 change events detected. 3 new PO lines created. 0 errors." Green status. Good.
-
-2. **7:05 AM â€” Exception Alert**: One warning: "12 PO lines have item codes not found in xref table." J.maliczak opens the xref management screen â€” a new supplier was added to the ERP last week with item codes that haven't been mapped yet. He adds 12 mappings (supplier code â†’ internal code) and marks them for re-processing in tonight's sync.
-
-3. **7:15 AM â€” New User Request**: An email from the China office â€” a new expeditor is starting next week. J.maliczak opens user management, creates the account (username, password, role: Expeditor, assigned suppliers: Supplier C, D, E), and sends the credentials.
-
-4. **7:20 AM â€” Audit Spot Check**: Curious about the "protection" pattern, J.maliczak opens the audit log filtered to "source = Expeditor estimate" for the past month. He notices one expeditor has 40% of entries as estimates vs. confirmed â€” worth a coaching conversation.
-
-**Requirements Revealed**:
-- Admin dashboard: ingestion job status, duration, counts, errors
-- Warning system for unmapped item codes (xref gaps)
-- Xref management CRUD with bulk import capability
-- User management: create/edit/deactivate, role assignment, supplier scope assignment
-- Audit log filtering: by user, by source type, by date range
-- Pattern detection capability in audit data
-
-
-### Journey 6: Management Visibility Readiness — Monthly Operational Review (Phase 2 Prep)
-
-**Scene**: End of month in Europe. Management asks whether the operation is ready for dashboard rollout in Phase 2.
-
-1. **Data confidence check**: Admin reviews ingestion reliability, coverage, and audit completeness trends from the operational logs.
-2. **Exception trend review**: Planner reviews late and at-risk movement across the month using existing filtering views and timeline evidence.
-3. **Readiness pack creation**: Admin compiles a monthly KPI-readiness summary (coverage %, delay trend direction, data freshness, audit completeness) for management review.
-4. **Decision point**: Management confirms whether data quality is sufficient to enable Phase 2 dashboard delivery.
-
-**Climax**: Management can decide on Phase 2 dashboard rollout using evidence from system-tracked operations rather than anecdotal updates.
-
-**Requirements Revealed**:
-- Consistent ingestion and audit logging quality signals across the month
-- Access to operational evidence for delay/freshness/coverage review
-- Repeatable monthly readiness summary for management decision-making
-
----
 ### Journey Requirements Summary
 
 | Capability Area | Journeys That Require It |
-|----------------|-------------------------|
-| PO list view with smart filtering & sorting | 1, 3, 5 |
+|-----------------|--------------------------|
+| PO list view with smart filtering and sorting | 1, 3, 5 |
 | Excel download tool (per-supplier) | 1, 5 |
 | Structured data entry with mandatory fields | 1, 2 |
-| **Source field (confirmed/estimate/no-response)** | **2, 3, 4** (critical for accountability) |
+| Source field (confirmed/estimate/no-response) | 2, 3, 4 |
 | Audit trail (who/when/what/why) | 1, 2, 3, 4 |
-| PO detail view with timeline | 3 |
-| Batch tracking (historical + planned) | 3, 5 |
-| Non-response / staleness detection | 2, 3 |
-| Notes/comments on updates | 2 |
-| Admin: ingestion monitoring | 4, 5 |
-| Admin: xref management | 4, 5 |
-| Admin: user management with supplier scoping | 4 |
-| Admin: audit log filtering & pattern analysis | 4 |
-| ERP connection & ingestion configuration | 5 |
-| First-run / baseline mode | 5 |
-| Status model with visual indicators | 1, 3 |
-| Change detection ("updated in last 24h") | 3 |
+| PO detail timeline and batch context | 3, 5 |
+| Admin operations and governance | 4, 5 |
+| Change detection visibility | 3 |
 | Management visibility readiness (Phase 2 KPI review) | 6 |
 
-**Critical Discovery from Journey 2**: The **source field** requirement ("Supplier confirmed" / "Expeditor estimate" / "No supplier response") is essential for solving the accountability problem â€” the core trust gap between China and Europe. It is included in the Milestone Date Recording feature (#4) as a mandatory field.
+## Domain-Specific Requirements
 
+### Cross-Border Infrastructure
+
+- Primary write environment located close to expeditor operations
+- Secondary read environment for European planners
+- Nightly replication to satisfy <= 1 day freshness tolerance
+- Private encrypted cross-region data channel
+
+### Audit and Data Retention
+
+- Append-only event history for operational changes
+- Retention and archival policy for closed PO histories
+- No silent overwrite of milestone history
+
+### Operational Security
+
+- Read-only ERP integration credentials
+- Role-scoped access control
+- Admin-auditable security events
 
 ## Web App Specific Requirements
 
 ### Project-Type Overview
 
-PO_Tracking is a server-rendered Multi-Page Application (MPA) built with Django + HTMX, served behind IIS with a FastAPI backend. The architecture prioritizes simplicity, reliability, and cross-firewall compatibility over client-side richness. HTMX provides targeted dynamic interactivity (filtering, inline updates) without the complexity of a full SPA framework. No real-time push features are required for MVP â€” users refresh data on demand via a dedicated in-app refresh button.
+PO_Tracking is a browser-based internal operational web application with server-rendered and progressively enhanced interactions.
 
 ### Browser Support Matrix
 
 | Browser | Version | User Group | Priority |
 |---------|---------|------------|----------|
-| Microsoft Edge | Latest 2 major versions | Expeditors (China) + Planners (Europe) | Primary |
-| Google Chrome | Latest 2 major versions | Planners (Europe) | Primary |
-| Mozilla Firefox | Latest 2 major versions | Planners (Europe) | Secondary |
-| 360 Secure Browser | Latest stable | Expeditors (China, occasional) | Best-effort |
-
-**Chromium baseline**: Edge, Chrome, and 360 Browser share the Chromium engine, reducing cross-browser risk. Firefox is the only non-Chromium target. Testing priority: Edge and Chrome cover the critical path; Firefox and 360 receive regression testing but are not release-blocking.
+| Microsoft Edge | Latest 2 major versions | Expeditors + Planners | Primary |
+| Google Chrome | Latest 2 major versions | Planners | Primary |
+| Mozilla Firefox | Latest 2 major versions | Planners | Secondary |
+| 360 Secure Browser | Latest stable | Expeditors (occasional) | Best effort |
 
 ### Responsive Design
 
-- **Primary target**: Desktop browsers (1280px+ viewport) â€” primary work tool on office workstations
-- **Secondary target**: Tablet-width viewports (768px-1279px) for occasional use
-- **Mobile**: Not targeted for MVP
-- **Layout approach**: Fluid layout with breakpoints at 768px and 1280px; data-heavy tables use horizontal scroll on narrower viewports
+- Primary: Desktop 1280px+
+- Secondary: Tablet 768-1279px
+- Mobile: Not targeted in MVP
 
 ### SEO Strategy
 
-- **MVP SEO scope:** Not applicable for primary authenticated workflows because core PO tracking screens require login and are not intended for public indexing
-- **Public surface:** If a public landing/help page is added, implement basic metadata (title, description, canonical URL) and allow indexing only for those public routes
-- **Indexing policy:** Protected operational routes must remain no-index/no-follow
-- **Success criterion:** Search crawlers can index only explicitly public pages; authenticated application pages are excluded from indexing
+- MVP SEO scope is not applicable for core authenticated PO workflows
+- If public pages are introduced, include basic metadata and canonical tags
+- Protected routes remain no-index/no-follow
+- Success criterion: only explicitly public pages are indexable
+
 ### Implementation Considerations
 
-- **No SPA framework needed**: Django templates + HTMX covers all interactivity requirements (list filtering, inline editing, form submission)
-- **Progressive enhancement**: Core functionality works without JavaScript; HTMX enhances with partial page updates
-- **Data refresh pattern**: Dedicated "Refresh" button triggers HTMX request to reload current view data â€” no WebSocket infrastructure for MVP
-- **Browser testing**: Chromium-based majority simplifies QA; spot-checks on Firefox
-- **360 Browser compatibility**: Avoid bleeding-edge CSS/JS features; stick to well-established web standards
+- Progressive enhancement for interactive workflows
+- Manual refresh model acceptable for MVP operational cadence
+- Favor stable web standards for browser compatibility
 
-Performance targets and accessibility requirements are specified in [Non-Functional Requirements](#non-functional-requirements) (NFR1â€“NFR7 for performance, NFR24â€“NFR26 for accessibility).
+## Functional Requirements
 
+### Data Ingestion and Synchronization
+
+- **FR1:** System can connect to supplier ERP database (read-only SQL) and extract active PO line data on a configurable schedule
+- **FR2:** System can store snapshots of ERP data and detect changes between consecutive snapshots using field-level comparison
+- **FR3:** System can generate change events when ERP fields differ from previous snapshot, recording what changed, when, and the previous/new values
+- **FR4:** System can reconstruct historical batch deliveries from ERP DeliveredQty and InDate records during ingestion
+- **FR5:** System can perform a first-run baseline snapshot without change detection (initial data load)
+- **FR6:** System can report ingestion results including duration, PO lines processed, change events detected, new lines created, and errors encountered
+- **FR7:** System can identify and report PO lines with item codes not found in the cross-reference table after ingestion
+- **FR8:** System can replicate data from the primary write environment to the secondary read environment on a nightly schedule
+
+### PO Visibility and Navigation
+
+- **FR9:** Expeditors can view a list of all active PO lines scoped to their assigned suppliers
+- **FR10:** Planners can view a list of all active PO lines across all suppliers
+- **FR11:** Users can filter the PO list by supplier, item, status, and delay classification (late, at-risk, on-track)
+- **FR12:** Users can sort the PO list by any displayed column, with due date as the default sort
+- **FR13:** System can display visual exception indicators on PO lines that are overdue or approaching their due date
+- **FR14:** Users can view PO lines updated within a specified time window (for example last 24 hours) for cross-timezone awareness
+- **FR15:** Users can view PO lines with no expeditor update within a configurable staleness threshold
+- **FR16:** Users can apply filter presets for common exception views (Late, At Risk, Updated Recently, No Response)
+- **FR17:** Users can manually refresh the current view data via a dedicated in-app refresh action
+
+### PO Investigation and Detail
+
+- **FR18:** Users can view a PO line detail page showing the full chronological timeline of all date changes with who, when, source, and reason
+- **FR19:** Users can view the batch delivery table for a PO line showing historical batches and planned future batches
+- **FR20:** Users can view the current status and complete status transition history for a PO line
+- **FR21:** Users can view the remaining quantity and delivery progress (delivered versus outstanding) for a PO line
+
+### Milestone and Status Management
+
+- **FR22:** Expeditors can record or update milestone dates (production-ready, ready-to-dispatch) for PO lines within their supplier scope
+- **FR23:** Expeditors can submit milestone updates only when date, reason, and source are provided; submissions missing any required field are rejected with validation feedback
+- **FR24:** Expeditors can classify each update source as "Supplier confirmed," "Expeditor estimate," or "No supplier response"
+- **FR25:** System can visually distinguish between confirmed, estimated, and no-response statuses in all views
+- **FR26:** System can store every milestone update as an append-only audit event with user, timestamp, previous value, new value, reason, and source
+- **FR27:** Users can add free-text notes or comments when recording a milestone update
+- **FR28:** System can manage PO line status transitions through the defined lifecycle: Planned -> In Production -> Ready to Dispatch -> Part Delivered -> Fully Delivered -> Cancelled/Closed
+
+### Batch Tracking
+
+- **FR29:** System can create historical batch records from ERP delivery data (DeliveredQty and InDate) during ingestion
+- **FR30:** Expeditors can create planned future batches with allocated quantity and expected dispatch date for PO lines within their scope
+- **FR31:** System can track batch status through: Planned -> Confirmed -> Dispatched -> Delivered
+- **FR32:** System can allocate batch quantities to PO lines without requiring ERP line splitting
+- **FR33:** Users can view batch-level delivery progress showing delivered batches versus remaining planned batches
+
+### Supplier Communication
+
+- **FR34:** Expeditors can generate a structured Excel file for a selected supplier containing all open PO lines for that supplier
+- **FR35:** System can pre-fill the Excel template with PO numbers, items, ordered quantity, remaining quantity, promised date, and current status
+- **FR36:** System can include supplier response fields in the generated Excel: Ready Date, Qty Ready, and Comments
+
+### User and Access Management
+
+- **FR37:** Users can authenticate using local credentials (username and password)
+- **FR38:** System can enforce role-based access control with three roles: Expeditor, Planner, Admin
+- **FR39:** System can scope expeditor access to only their assigned suppliers' PO data
+- **FR40:** System can enforce authorization at the API boundary, preventing unauthorized access regardless of UI state
+
+### System Administration
+
+- **FR41:** Admins can create, edit, and deactivate user accounts with role assignment
+- **FR42:** Admins can assign and modify supplier scope for expeditor users
+- **FR43:** Admins can manage the item cross-reference table including individual and bulk operations
+- **FR44:** Admins can view ingestion job history with status, duration, record counts, and error details
+- **FR45:** Admins can view and filter the audit log by user, source type, date range, and event type
+- **FR46:** Admins can configure ERP connection parameters and ingestion schedule settings
+- **FR47:** Admins can configure system parameters including staleness thresholds and ingestion lookback window
+- **FR48:** System can flag unmapped items visibly in the UI rather than silently dropping them during ingestion
 
 ## Non-Functional Requirements
 
 ### Performance
 
-- **NFR1:** PO list view and dashboard pages render within 3 seconds on initial load, including server-side rendering and HTMX initialization
-- **NFR2:** HTMX partial updates (filter, sort, refresh) complete within 2 seconds for datasets up to 5,000 active PO lines
-- **NFR3:** PO detail view (timeline + batch table + audit history) loads within 2 seconds
-- **NFR4:** Excel file generation completes within 5 seconds for a single supplier with up to 200 PO lines
-- **NFR5:** System supports up to 10 concurrent users without performance degradation
-- **NFR6:** Cross-firewall latency of up to 500ms additional round-trip time is acceptable for European users accessing the China-hosted application
-- **NFR7:** Nightly ERP ingestion job completes within 1 hour including snapshot, diff, change event generation, and historical batch reconstruction
+- **NFR1:** PO list view and dashboard pages render within 3 seconds on initial load
+- **NFR2:** Partial list updates (filter, sort, refresh) complete within 2 seconds for datasets up to 5,000 active PO lines
+- **NFR3:** PO detail view (timeline plus batch table plus audit history) loads within 2 seconds
+- **NFR4:** Excel generation completes within 5 seconds for a single supplier with up to 200 PO lines
+- **NFR5:** System supports up to 10 concurrent users without observable performance degradation
+- **NFR6:** Additional cross-firewall latency up to 500ms round-trip is acceptable for remote read users
+- **NFR7:** Nightly ERP ingestion completes within 1 hour including snapshot, diff, change event generation, and historical batch reconstruction
 
 ### Security
 
-- **NFR8:** User passwords are stored using secure hashing (bcrypt or argon2) â€” never in plaintext or reversible encryption
-- **NFR9:** Role-based access control is enforced at the API level â€” expeditors cannot access data outside their assigned supplier scope regardless of client-side manipulation
-- **NFR10:** The audit event log is append-only â€” no delete or update operations are permitted on audit records at the application or API level
-- **NFR11:** ERP database connection uses read-only SQL credentials with minimal required permissions
+- **NFR8:** User passwords are stored using secure hashing (bcrypt or argon2), never plaintext or reversible encryption
+- **NFR9:** Role-based access control is enforced at the API boundary for supplier-scope restrictions
+- **NFR10:** Audit event storage is append-only with no application-level update or delete path
+- **NFR11:** ERP integration uses read-only SQL credentials with minimum necessary permissions
 - **NFR12:** Network communication between the primary operations environment and remote access environments is secured in transit through a private encrypted channel
 - **NFR13:** User sessions expire after 30 minutes of inactivity and require re-authentication before additional protected actions are allowed
 
-### Reliability & Availability
+### Reliability and Availability
 
-- **NFR14:** System is available during all business hours across both timezones (approximately 00:00â€“18:00 UTC)
-- **NFR15:** A 1-hour maintenance window is reserved during off-hours for updates and deployments; brief downtime (5â€“10 minutes) during this window is acceptable
-- **NFR16:** Nightly ERP ingestion achieves a success rate of 95% or higher over any rolling 30-day period
-- **NFR17:** Zero data loss on the audit event log â€” append-only storage must never lose or overwrite events
-- **NFR18:** Daily database backups with a Recovery Point Objective (RPO) of 24 hours and ability to restore within 4 hours
-- **NFR19:** Ingestion job includes retry logic on transient ERP connection failures before reporting a failed run
+- **NFR14:** System is available during business hours across both timezones (approximately 00:00-18:00 UTC)
+- **NFR15:** A 1-hour off-hours maintenance window is supported; brief downtime up to 10 minutes is acceptable
+- **NFR16:** Nightly ERP ingestion achieves >= 95% success over any rolling 30-day period
+- **NFR17:** Audit event storage must achieve zero data loss from committed events
+- **NFR18:** Daily backups provide RPO <= 24 hours and restore capability within 4 hours
+- **NFR19:** Ingestion includes retry logic for transient ERP connection errors before final failure state
 
 ### Integration
 
-- **NFR20:** ERP integration uses read-only direct SQL connection to MS SQL Server â€” no write-back under any circumstances
-- **NFR21:** Data replication from the primary write environment to the secondary read environment completes within the nightly sync window (10:00–07:00 UTC)
-- **NFR22:** If database replication fails, the European replica retains last-synced data and an alert is generated for the admin
-- **NFR23:** Ingestion gracefully handles unmapped item codes â€” flagging them for admin review rather than failing the entire job or silently dropping records
+- **NFR20:** ERP integration remains read-only with no write-back behavior
+- **NFR21:** Data replication from the primary write environment to the secondary read environment completes within the nightly sync window (10:00-07:00 UTC)
+- **NFR22:** On replication failure, secondary read environment serves last successful sync and generates an admin alert
+- **NFR23:** Unmapped item codes are flagged for admin review without failing the full ingestion run
 
 ### Accessibility
 
-- **NFR24:** All user-facing pages comply with WCAG 2.1 Level A success criteria
-- **NFR25:** Status indicators use color combined with icon or text â€” color is never the sole means of conveying information
-- **NFR26:** All form inputs have associated labels; all interactive elements are keyboard-accessible
+- **NFR24:** User-facing pages comply with WCAG 2.1 Level A success criteria
+- **NFR25:** Status indicators use color plus icon or text; color is never the only signal
+- **NFR26:** Form inputs are labeled and interactive elements are keyboard accessible
 
-### Deployability & Operations
+### Deployability and Operations
 
-- **NFR27:** Application updates can be deployed within the 1-hour maintenance window by a single administrator
+- **NFR27:** Application updates are deployable by a single administrator within the maintenance window
 - **NFR28:** Application runtime components operate as managed background services behind an enterprise reverse proxy without requiring container runtime dependencies
 - **NFR29:** Ingestion failures, replication failures, and xref mapping gaps are recorded in the admin-visible event log within 60 seconds of detection, including timestamp, severity, and event type
-
