@@ -1,0 +1,247 @@
+  Create Epics and Stories — Step 1: Validate Prerequisites                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                  
+  Welcome, J.maliczak! Let's transform your PRD requirements and architecture decisions into implementable epics and stories.
+                                                                                                                                                                                                                                                                                                                                                                                                    Prerequisite Documents Found                                                                                                                                                                                                                                                                                                                                                                    
+  ┌──────────────┬──────────────────┬────────────────────────────┐                                                                                                                                                                                                                                                                                                                                  │   Document   │      Status      │            Path            │                                                                                                                                                                                                                                                                                                                                
+  ├──────────────┼──────────────────┼────────────────────────────┤
+  │ PRD          │ Found            │ prd.md                     │
+  ├──────────────┼──────────────────┼────────────────────────────┤
+  │ Architecture │ Found (complete) │ architecture.md            │
+  ├──────────────┼──────────────────┼────────────────────────────┤
+  │ UX Design    │ Found (complete) │ ux-design-specification.md │
+  └──────────────┴──────────────────┴────────────────────────────┘
+  All three required documents are present and complete.
+
+  Are there any other documents to include for analysis, or should any of these be excluded?
+
+❯ No, pls proceed                                                                                                                                                                                                                                                                                                                                                                                                  
+● Now let me extract all requirements from the documents. I already have the FRs and NFRs from the PRD. Let me also pull the additional requirements from Architecture and UX.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+● Searched for 1 pattern, read 1 file (ctrl+o to expand)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+● I have all the requirements. Now let me create the output file and present the extraction summary.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+● Write(_bmad-output\planning-artifacts\epics.md)                                                                                                                                                                                                                                                                                                                                                   ⎿  Wrote 1 lines to _bmad-output\planning-artifacts\epics.md                                                                                                                                                                                                                                                                                                                                    
+     ---                                                                                                                                                                                                                                                                                                                                                                                               stepsCompleted: [1]                                                                                                                                                                                                                                                                                                                                                                          
+     inputDocuments:                                                                                                                                                                                                                                                                                                                                                                              
+       - prd.md                                                                                                                                                                                                                                                                                                                                                                                   
+       - architecture.md
+       - ux-design-specification.md                                                                                                                                                                                                                                                                                                                                                               
+     ---
+
+     # PO_Tracking - Epic Breakdown
+
+
+● Here's the requirements extraction summary:                                                                                                                                                                                                                                                                                                                                                        
+  Requirements Extracted                                                                                                                                                                                                                                                                                                                                                                          
+  
+  Functional Requirements: 51 FRs across 8 capability areas                                                                                                                                                                                                                                                                                                                                       
+  - Data Ingestion & Synchronization: FR1-FR8c (11 FRs)                                                                                                                                                                                                                                                                                                                                           
+  - PO Visibility & Navigation: FR9-FR17e (13 FRs)                                                                                                                                                                                                                                                                                                                                                  - PO Investigation & Detail: FR18-FR21 (4 FRs)                                                                                                                                                                                                                                                                                                                                                  
+  - Milestone & Status Management: FR22-FR28 (10 FRs)
+  - Batch Tracking: FR29-FR33 (5 FRs)
+  - Supplier Communication: FR34-FR36 (3 FRs)
+  - User & Access Management: FR37-FR40 (4 FRs)
+  - System Administration: FR41-FR51 (11 FRs)
+
+  Non-Functional Requirements: 29 NFRs across 6 quality areas (Performance, Security, Reliability, Integration, Accessibility, Deployability)
+
+  Additional Requirements from Architecture: 16 technical requirements including project initialization scaffold, split settings, custom User model, dual-database routing, HTMX fragment patterns, append-only audit, RBAC decorators, and deployment infrastructure.
+
+  Additional Requirements from UX Design: 10 UX requirements including Direction B visual design, 13 custom components, 3 update interaction patterns, Bootstrap/HTMX CDN delivery, responsive breakpoints, accessibility compliance, and toast notification patterns.
+
+  Total: 51 FRs + 29 NFRs + 26 additional technical/UX requirements = 106 requirements to decompose into epics and stories.
+
+  ---
+  Confirm the Requirements are complete and correct to [C] continue:
+
+✻ Brewed for 1m 7s
+
+❯ C                                                                                                                                                                                                                                                                                                                                                                                                   
+● Read 1 file (ctrl+o to expand)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+● Now let me design the epic structure based on the extracted requirements.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+  ---                                                                                                                                                                                                                                                                                                                                                                                             
+  Step 2: Design Epic List
+                                                                                                                                                                                                                                                                                                                                                                                                    Based on the 51+ FRs, 29 NFRs, and additional architecture/UX requirements, here's the proposed epic structure organized around user value delivery:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+  Proposed Epic Structure (8 Epics)
+
+  Epic 1: Project Foundation & User Access
+  Users can securely log in with role-based access, and the system enforces authorization boundaries. This epic bootstraps the entire application scaffold including the Django project, database connections, custom User model, and base templates.
+  FRs covered: FR37, FR38, FR39, FR40
+  Standalone: Yes — delivers complete authentication and RBAC. All subsequent epics build on this foundation.
+
+  Epic 2: Data Ingestion Pipeline
+  The system automatically ingests PO data from the supplier ERP nightly, detects changes, reconstructs historical batches, and reports results. Admins can verify that data is flowing correctly.
+  FRs covered: FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8a, FR8b, FR8c
+  Standalone: Yes — delivers complete ingestion with data in the app DB. Needs Epic 1 for auth/models.
+
+  Epic 3: PO List View & Navigation
+  Planners and expeditors can view, filter, sort, and customize their PO line list with exception indicators, filter presets, column chooser, and custom column display. This is the primary daily work interface.
+  FRs covered: FR9, FR10, FR11, FR12, FR13, FR14, FR15, FR16, FR17, FR17a, FR17b, FR17c, FR17d, FR17e, FR51
+  Standalone: Yes — delivers complete list experience. Needs Epic 1 (auth) + Epic 2 (data).
+
+  Epic 4: PO Detail & Investigation
+  Users can open a PO line's detail panel to investigate the full timeline, batch history, status transitions, and delivery progress.
+  FRs covered: FR18, FR19, FR20, FR21
+  Standalone: Yes — delivers complete investigation capability. Needs Epic 3 (list to navigate from).
+
+  Epic 5: Milestone Recording & Status Management
+  Expeditors can record milestone updates (single, bulk, inline), track ready quantities, and manage PO status transitions — with full audit accountability.
+  FRs covered: FR22, FR22a, FR22b, FR22c, FR23, FR24, FR25, FR26, FR27, FR27a, FR27b, FR28
+  Standalone: Yes — delivers complete milestone workflow. Needs Epic 3 (list) + Epic 4 (detail context).
+
+  Epic 6: Batch Tracking
+  Users can view historical batches from ERP data, create planned future batches, track batch lifecycle, and monitor batch-level delivery progress.
+  FRs covered: FR29, FR30, FR31, FR32, FR33
+  Standalone: Yes — delivers complete batch management. Needs Epic 4 (detail panel for batch views).
+
+  Epic 7: Supplier Communication
+  Expeditors can generate structured Excel files for suppliers with pre-filled PO data and response fields, replacing manual spreadsheet workflows.
+  FRs covered: FR34, FR35, FR36
+  Standalone: Yes — delivers complete Excel generation. Needs Epic 3 (PO data/filtering).
+
+  Epic 8: System Administration & Operations
+  Admins can manage users, supplier scopes, xref tables, ingestion monitoring, audit logs, system configuration, custom column configuration, and cross-region replication.
+  FRs covered: FR8, FR41, FR42, FR43, FR44, FR45, FR46, FR47, FR48, FR49, FR50
+  Standalone: Yes — delivers complete admin operational control. Needs Epic 1 (auth) + Epic 2 (ingestion data).
+
+  FR Coverage Map
+  ┌───────┬────────┬────────────────────────────────────────────────┐
+  │  FR   │  Epic  │                  Description                   │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR1   │ Epic 2 │ ERP connection and data extraction             │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR2   │ Epic 2 │ Snapshot storage and change detection          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR3   │ Epic 2 │ Change event generation                        │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR4   │ Epic 2 │ Historical batch reconstruction                │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR5   │ Epic 2 │ First-run baseline snapshot                    │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR6   │ Epic 2 │ Ingestion results reporting                    │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR7   │ Epic 2 │ Xref gap identification                        │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR8   │ Epic 8 │ Cross-region replication                       │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR8a  │ Epic 2 │ Item, PO insert date, final customer ingestion │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR8b  │ Epic 2 │ Custom column ERP ingestion                    │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR8c  │ Epic 2 │ Custom column source tracking                  │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR9   │ Epic 3 │ Expeditor scoped PO list                       │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR10  │ Epic 3 │ Planner full PO list                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR11  │ Epic 3 │ Column filtering                               │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR12  │ Epic 3 │ Column sorting                                 │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR13  │ Epic 3 │ Exception indicators                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR14  │ Epic 3 │ Recently updated filter                        │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR15  │ Epic 3 │ Staleness filter                               │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR16  │ Epic 3 │ Filter presets                                 │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17  │ Epic 3 │ Manual refresh                                 │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17a │ Epic 3 │ Column chooser                                 │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17b │ Epic 3 │ Column preference persistence                  │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17c │ Epic 3 │ Role-based default columns                     │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17d │ Epic 3 │ Item, PO insert date, final customer columns   │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR17e │ Epic 3 │ Custom column display                          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR18  │ Epic 4 │ PO detail timeline                             │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR19  │ Epic 4 │ Batch delivery table                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR20  │ Epic 4 │ Status transition history                      │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR21  │ Epic 4 │ Quantity/delivery progress                     │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR22  │ Epic 5 │ Milestone date recording                       │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR22a │ Epic 5 │ Ready quantity recording                       │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR22b │ Epic 5 │ Partial production readiness tracking          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR22c │ Epic 5 │ Cumulative ready quantity display              │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR23  │ Epic 5 │ Mandatory field validation                     │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR24  │ Epic 5 │ Source quality classification                  │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR25  │ Epic 5 │ Source quality visual distinction              │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR26  │ Epic 5 │ Append-only audit events                       │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR27  │ Epic 5 │ Free-text notes                                │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR27a │ Epic 5 │ Bulk milestone update                          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR27b │ Epic 5 │ Inline edit mode                               │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR28  │ Epic 5 │ Status lifecycle transitions                   │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR29  │ Epic 6 │ Historical batch creation from ERP             │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR30  │ Epic 6 │ Planned batch creation                         │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR31  │ Epic 6 │ Batch status lifecycle                         │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR32  │ Epic 6 │ Batch quantity allocation                      │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR33  │ Epic 6 │ Batch progress view                            │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR34  │ Epic 7 │ Supplier Excel generation                      │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR35  │ Epic 7 │ Excel pre-fill                                 │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR36  │ Epic 7 │ Excel response fields                          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR37  │ Epic 1 │ Local authentication                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR38  │ Epic 1 │ Three-role RBAC                                │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR39  │ Epic 1 │ Supplier scope enforcement                     │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR40  │ Epic 1 │ API boundary authorization                     │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR41  │ Epic 8 │ User CRUD                                      │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR42  │ Epic 8 │ Supplier scope assignment                      │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR43  │ Epic 8 │ Xref table management                          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR44  │ Epic 8 │ Ingestion monitoring                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR45  │ Epic 8 │ Audit log viewer                               │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR46  │ Epic 8 │ ERP connection config                          │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR47  │ Epic 8 │ System parameter config                        │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR48  │ Epic 8 │ Unmapped item flagging                         │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR49  │ Epic 8 │ Custom column config                           │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR50  │ Epic 8 │ Custom column activate/deactivate              │
+  ├───────┼────────┼────────────────────────────────────────────────┤
+  │ FR51  │ Epic 3 │ Custom column user entry                       │
+  └───────┴────────┴────────────────────────────────────────────────┘
+  Coverage: All FRs mapped. Zero orphaned requirements.
+
+  Epic Dependency Flow:
+  Epic 1 (Foundation) → Epic 2 (Ingestion) → Epic 3 (List View) → Epic 4 (Detail)
+                                                   ↓                      ↓
+                                             Epic 7 (Excel)         Epic 5 (Milestones)
+                                                                         ↓
+                     Epic 8 (Admin) ←──────────────────────────── Epic 6 (Batches)
+
+  ---
+  Select an Option: [A] Advanced Elicitation [P] Party Mode [C] Continue
