@@ -41,7 +41,7 @@ story_location: "D:/Python/PO_Tracking/_bmad-output/implementation-artifacts"
 
 development_status:
   epic-1: in-progress
-  1-1-project-scaffold-settings-configuration: ready-for-dev
+  1-1-project-scaffold-settings-configuration: done
   1-2-custom-user-model-authentication: ready-for-dev
   1-3-base-ui-framework-htmx-setup: backlog
   1-4-role-based-access-control: backlog
@@ -95,4 +95,5 @@ development_status:
   8-6-system-erp-configuration: backlog
   8-7-custom-column-configuration-cross-region-replication: backlog
   epic-8-retrospective: optional
+
 

@@ -7,7 +7,9 @@
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_close",
       "mcp__exa__web_search_exa",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(.venv\\\\Scripts\\\\python:*)",
+      "Bash(python -m unittest:*)"
     ]
   }
 }
