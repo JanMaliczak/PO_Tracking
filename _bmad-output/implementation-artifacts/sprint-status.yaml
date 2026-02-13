@@ -54,44 +54,44 @@ development_status:
   2-5-historical-batch-reconstruction-custom-column-ingestion: done
   2-6-ingestion-orchestration-results-reporting: done
   epic-2-retrospective: optional
-  epic-3: backlog
-  3-1-basic-po-list-view-with-role-scoping: backlog
-  3-2-column-filtering-sorting: backlog
-  3-3-exception-indicators-status-badges: backlog
-  3-4-filter-presets-time-based-filters: backlog
-  3-5-column-chooser-preference-persistence: backlog
-  3-6-standard-custom-column-display: backlog
-  3-7-manual-refresh-custom-column-user-entry: backlog
+  epic-3: in-progress
+  3-1-basic-po-list-view-with-role-scoping: ready-for-dev
+  3-2-column-filtering-sorting: ready-for-dev
+  3-3-exception-indicators-status-badges: ready-for-dev
+  3-4-filter-presets-time-based-filters: ready-for-dev
+  3-5-column-chooser-preference-persistence: ready-for-dev
+  3-6-standard-custom-column-display: ready-for-dev
+  3-7-manual-refresh-custom-column-user-entry: ready-for-dev
   epic-3-retrospective: optional
-  epic-4: backlog
-  4-1-po-detail-slide-over-panel: backlog
-  4-2-audit-timeline-change-history: backlog
-  4-3-batch-delivery-table: backlog
-  4-4-status-history-delivery-progress: backlog
+  epic-4: in-progress
+  4-1-po-detail-slide-over-panel: ready-for-dev
+  4-2-audit-timeline-change-history: ready-for-dev
+  4-3-batch-delivery-table: ready-for-dev
+  4-4-status-history-delivery-progress: ready-for-dev
   epic-4-retrospective: optional
-  epic-5: backlog
-  5-1-single-milestone-update-modal: backlog
-  5-2-ready-quantity-recording: backlog
-  5-3-source-quality-visual-distinction: backlog
-  5-4-bulk-milestone-update: backlog
-  5-5-inline-edit-mode: backlog
-  5-6-status-lifecycle-transitions: backlog
+  epic-5: in-progress
+  5-1-single-milestone-update-modal: ready-for-dev
+  5-2-ready-quantity-recording: ready-for-dev
+  5-3-source-quality-visual-distinction: ready-for-dev
+  5-4-bulk-milestone-update: ready-for-dev
+  5-5-inline-edit-mode: ready-for-dev
+  5-6-status-lifecycle-transitions: ready-for-dev
   epic-5-retrospective: optional
-  epic-6: backlog
-  6-1-planned-batch-creation: backlog
-  6-2-batch-status-lifecycle: backlog
-  6-3-batch-progress-view: backlog
+  epic-6: in-progress
+  6-1-planned-batch-creation: ready-for-dev
+  6-2-batch-status-lifecycle: ready-for-dev
+  6-3-batch-progress-view: ready-for-dev
   epic-6-retrospective: optional
-  epic-7: backlog
-  7-1-supplier-excel-generation-download: backlog
-  7-2-supplier-response-fields-template-formatting: backlog
+  epic-7: in-progress
+  7-1-supplier-excel-generation-download: ready-for-dev
+  7-2-supplier-response-fields-template-formatting: ready-for-dev
   epic-7-retrospective: optional
-  epic-8: backlog
-  8-1-admin-dashboard-navigation: backlog
-  8-2-user-management: backlog
-  8-3-xref-table-management: backlog
-  8-4-ingestion-monitoring: backlog
-  8-5-audit-log-viewer: backlog
-  8-6-system-erp-configuration: backlog
-  8-7-custom-column-configuration-cross-region-replication: backlog
+  epic-8: in-progress
+  8-1-admin-dashboard-navigation: ready-for-dev
+  8-2-user-management: ready-for-dev
+  8-3-xref-table-management: ready-for-dev
+  8-4-ingestion-monitoring: ready-for-dev
+  8-5-audit-log-viewer: ready-for-dev
+  8-6-system-erp-configuration: ready-for-dev
+  8-7-custom-column-configuration-cross-region-replication: ready-for-dev
   epic-8-retrospective: optional

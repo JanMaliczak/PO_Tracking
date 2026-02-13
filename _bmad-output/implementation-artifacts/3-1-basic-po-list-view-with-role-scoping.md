@@ -1,49 +1,63 @@
-# Story 2.4: Xref Mapping & Gap Identification
+# Story 3.1: Basic PO List View with Role Scoping
 
-Status: done
+Status: ready-for-dev
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
 ## Story
 
-As a admin,
-I want PO lines mapped through the SKU cross-reference table with unmapped items flagged for review,
-so that ERP item codes are correctly translated and data quality gaps are visible without failing the ingestion.
+As a planner or expeditor,
+I want to see a list of active PO lines scoped to my role and sorted by due date,
+so that I can immediately begin working with the most urgent items first.
 
 ## Acceptance Criteria
 
-1. Given the `ItemXref` table contains mappings from ERP item codes to application SKUs and Items
-   - When the ingestion pipeline processes extracted PO line records
-   - Then each record's ERP item code is looked up in the `ItemXref` table
-   - And matched records have their `POLine.sku` and `POLine.item` fields populated from the cross-reference
-2. Given a PO line's ERP item code is not found in the `ItemXref` table
-   - When the xref lookup fails for that record per FR7
-   - Then the PO line is still created/updated in the app database (ingestion does not fail) per NFR23
-   - And the PO line is flagged as having an unmapped item code
-   - And the unmapped item code is recorded in the ingestion results for admin review
-3. Given the ingestion run completes
-   - When xref gaps are summarized
-   - Then a count of unmapped item codes is included in the ingestion results report
-   - And an audit event with `event_type='xref_gap'` is logged for each unmapped item code within 60 seconds of detection per NFR29
-   - And the list of unmapped codes is available for the admin monitoring dashboard (Epic 8)
+1. Given a logged-in expeditor with assigned suppliers
+   - When they navigate to the PO list view at `/po/`
+   - Then the list displays only PO lines belonging to their assigned supplier(s) per FR9
+   - And the view uses `.for_user(request.user)` queryset scoping from Story 1.4
+2. Given a logged-in planner
+   - When they navigate to the PO list view at `/po/`
+   - Then the list displays all active PO lines across all suppliers per FR10
+3. Given the PO list is displayed
+   - When the page renders
+   - Then default columns are shown: PO number, line number, supplier, SKU, item, ordered quantity, remaining quantity, promised date, status, and source quality
+   - And rows are sorted by promised date (due date) ascending as the default sort per FR12
+   - And the page renders within 3 seconds on initial load per NFR1
+4. Given the PO list view serves both full-page and HTMX requests
+   - When a standard navigation request arrives
+   - Then the full page `po/po_list.html` is rendered extending `base.html`
+   - When an HTMX request arrives (detected via `request.htmx`)
+   - Then only the `po/_table_body.html` fragment is returned for table body swap
+5. Given the dataset contains many PO lines
+   - When the list is rendered
+   - Then server-side pagination is applied with a configurable page size
+   - And pagination controls allow navigating between pages via HTMX partial refresh
+   - And the `_partials/_pagination.html` fragment is used for pagination rendering
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Implement acceptance criteria group 1 (AC: 1)
-  - [x] Subtask 1.1: Implement backend/view/template changes required by AC 1
-  - [x] Subtask 1.2: Add/adjust tests covering AC 1
-- [x] Task 2: Implement acceptance criteria group 2 (AC: 2)
-  - [x] Subtask 2.1: Implement backend/view/template changes required by AC 2
-  - [x] Subtask 2.2: Add/adjust tests covering AC 2
-- [x] Task 3: Implement acceptance criteria group 3 (AC: 3)
-  - [x] Subtask 3.1: Implement backend/view/template changes required by AC 3
-  - [x] Subtask 3.2: Add/adjust tests covering AC 3
+- [ ] Task 1: Implement acceptance criteria group 1 (AC: 1)
+  - [ ] Subtask 1.1: Implement backend/view/template changes required by AC 1
+  - [ ] Subtask 1.2: Add/adjust tests covering AC 1
+- [ ] Task 2: Implement acceptance criteria group 2 (AC: 2)
+  - [ ] Subtask 2.1: Implement backend/view/template changes required by AC 2
+  - [ ] Subtask 2.2: Add/adjust tests covering AC 2
+- [ ] Task 3: Implement acceptance criteria group 3 (AC: 3)
+  - [ ] Subtask 3.1: Implement backend/view/template changes required by AC 3
+  - [ ] Subtask 3.2: Add/adjust tests covering AC 3
+- [ ] Task 4: Implement acceptance criteria group 4 (AC: 4)
+  - [ ] Subtask 4.1: Implement backend/view/template changes required by AC 4
+  - [ ] Subtask 4.2: Add/adjust tests covering AC 4
+- [ ] Task 5: Implement acceptance criteria group 5 (AC: 5)
+  - [ ] Subtask 5.1: Implement backend/view/template changes required by AC 5
+  - [ ] Subtask 5.2: Add/adjust tests covering AC 5
 
 ## Dev Notes
 
 ### Developer Context Section
 
-- This story belongs to Epic 2 and should align implementation to the PRD, architecture, and UX artifacts.
+- This story belongs to Epic 3 and should align implementation to the PRD, architecture, and UX artifacts.
 - Keep scope constrained to the acceptance criteria above; avoid introducing unrelated behavior changes.
 - Prefer iterative delivery with HTMX partial updates and server-rendered templates where interaction requires dynamic updates.
 
@@ -69,6 +83,9 @@ so that ERP item codes are correctly translated and data quality gaps are visibl
 ### File Structure Requirements
 
 - Follow established app boundaries under `apps/` and template fragments under `templates/`.
+- Story references path: `_partials/_pagination.html`
+- Story references path: `po/_table_body.html`
+- Story references path: `po/po_list.html`
 
 ### Testing Requirements
 
@@ -83,7 +100,7 @@ so that ERP item codes are correctly translated and data quality gaps are visibl
 
 ### Project Context Reference
 
-- Primary source story definition: `_bmad-output/planning-artifacts/epics.md` (Epic 2, Story 2.4)
+- Primary source story definition: `_bmad-output/planning-artifacts/epics.md` (Epic 3, Story 3.1)
 - Architecture guardrails: `_bmad-output/planning-artifacts/architecture.md`
 - UX requirements and interaction patterns: `_bmad-output/planning-artifacts/ux-design-specification.md`
 - Requirement baseline: `_bmad-output/planning-artifacts/prd.md`
@@ -107,12 +124,12 @@ Codex GPT-5
 
 ### Completion Notes List
 
-- Story document upgraded to full implementation template format while preserving `done` status.
-- Acceptance criteria and task mapping retained from epic source with implementation guardrails sections added.
+- Story context generated in full template format and prepared for developer execution.
+- Acceptance criteria mapped into actionable tasks and guardrails for implementation consistency.
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/2-4-xref-mapping-gap-identification.md`
+- `_bmad-output/implementation-artifacts/3-1-basic-po-list-view-with-role-scoping.md`
 - `_bmad-output/planning-artifacts/epics.md`
 - `_bmad-output/planning-artifacts/architecture.md`
 - `_bmad-output/planning-artifacts/ux-design-specification.md`
@@ -126,4 +143,4 @@ Codex GPT-5
 
 ## Change Log
 
-- 2026-02-13: Regenerated Story 2.4 using the full implementation template format aligned to Story 1.1 structure.
+- 2026-02-13: Regenerated Story 3.1 using the full implementation template format aligned to Story 1.1 structure.
