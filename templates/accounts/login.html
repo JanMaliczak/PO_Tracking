@@ -1,0 +1,31 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Login | PO Tracking{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-3">Sign in</h1>
+
+{% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}
+      <p class="mb-0">{{ error }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<form method="post" action="{% url 'accounts:login' %}">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="id_username" class="form-label">Username</label>
+    <input id="id_username" name="username" type="text" class="form-control" required autocomplete="username" autofocus>
+  </div>
+
+  <div class="mb-3">
+    <label for="id_password" class="form-label">Password</label>
+    <input id="id_password" name="password" type="password" class="form-control" required autocomplete="current-password">
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100">Login</button>
+</form>
+{% endblock %}
+

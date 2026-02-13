@@ -1,0 +1,92 @@
+:root {
+  --app-nav-bg: #0f2f52;
+  --app-nav-bg-hover: #123b66;
+  --app-page-bg: #eef2f7;
+}
+
+body {
+  background-color: var(--app-page-bg);
+}
+
+.app-navbar {
+  background-color: var(--app-nav-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.app-navbar .navbar-brand {
+  letter-spacing: 0.01em;
+}
+
+.app-navbar .btn-outline-light:hover {
+  background-color: var(--app-nav-bg-hover);
+}
+
+.auth-page-bg {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(15, 47, 82, 0.14), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(15, 47, 82, 0.08), transparent 42%),
+    var(--app-page-bg);
+}
+
+.auth-card {
+  border-radius: 0.75rem;
+}
+
+.app-toast-container {
+  z-index: 1085;
+}
+
+.app-toast {
+  margin-bottom: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
+  opacity: 0.96;
+  transform: translateY(0);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.app-toast-hide {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.app-toast-success {
+  background-color: #198754;
+}
+
+.app-toast-error {
+  background-color: #b42318;
+}
+
+.app-toast-warning {
+  background-color: #7a4400;
+}
+
+.app-toast-info {
+  background-color: #0d6efd;
+}
+
+.app-loading-indicator {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background-color: rgba(2, 6, 23, 0.45);
+  z-index: 1075;
+}
+
+@media (max-width: 1279px) {
+  .app-navbar .navbar-brand {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  main.container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+

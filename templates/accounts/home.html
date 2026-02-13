@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Home | PO Tracking{% endblock %}
+
+{% block content %}
+<div class="p-4 bg-white border rounded-3 shadow-sm">
+  <h1 class="h4 mb-2">PO Tracking</h1>
+  <p class="mb-0">Welcome, {{ request.user.username }}.</p>
+</div>
+{% endblock %}

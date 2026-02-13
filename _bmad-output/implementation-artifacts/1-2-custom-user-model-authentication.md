@@ -1,6 +1,6 @@
 # Story 1.2: Custom User Model & Authentication
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -41,10 +41,24 @@ so that I can access the application with my identity established.
    - Then the session is expired and the user is redirected to the login page for re-authentication per NFR13
 ## Tasks / Subtasks
 
-- [ ] Task 1 (AC: #)
-  - [ ] Subtask 1.1
-- [ ] Task 2 (AC: #)
-  - [ ] Subtask 2.1
+- [x] Task 1: Implement custom auth data model and settings wiring (AC: 1, 3)
+  - [x] Subtask 1.1: Add `Supplier` model in `apps/po/models.py` with required fields (`id`, `name`, `code`)
+  - [x] Subtask 1.2: Add custom `User(AbstractUser)` model in `apps/accounts/models.py` with `role` choices (`admin`, `planner`, `expeditor`) and nullable `supplier` FK to `po.Supplier`
+  - [x] Subtask 1.3: Configure `AUTH_USER_MODEL = 'accounts.User'` and session policy (`SESSION_COOKIE_AGE=1800`, `SESSION_SAVE_EVERY_REQUEST=True`) in base settings
+  - [x] Subtask 1.4: Create initial migrations for `accounts` and `po` and verify migration chain includes custom user and supplier tables
+- [x] Task 2: Implement login/logout HTTP flow and templates (AC: 2, 4, 5)
+  - [x] Subtask 2.1: Implement authentication views in `apps/accounts/views.py` using Django auth framework and safe redirects
+  - [x] Subtask 2.2: Implement `apps/accounts/urls.py` routes for `/accounts/login/` and logout endpoint, include in `po_tracking/urls.py`
+  - [x] Subtask 2.3: Create `templates/base_auth.html` and `templates/accounts/login.html` with labeled, keyboard-accessible username/password inputs and generic invalid-credential messaging
+  - [x] Subtask 2.4: Provide authenticated placeholder landing route for post-login redirect target and add logout control for click path
+- [x] Task 3: Validate session expiration and authentication guard behavior (AC: 3, 6)
+  - [x] Subtask 3.1: Ensure authenticated routes require login and redirect unauthenticated/expired sessions to `/accounts/login/`
+  - [x] Subtask 3.2: Verify inactivity timeout behavior is enforced by session settings contract
+- [x] Task 4: Author and execute automated tests for models, auth flow, and session policy (AC: 1-6)
+  - [x] Subtask 4.1: Add model/settings tests for custom user wiring, role choices, supplier FK, and session settings invariants
+  - [x] Subtask 4.2: Add auth view tests covering login page rendering, valid login redirect + session creation, invalid credentials generic error, and logout invalidation
+  - [x] Subtask 4.3: Add session-expiration behavior test to verify forced re-authentication after inactivity timeout
+  - [x] Subtask 4.4: Run full test suite and Django checks to confirm no regressions
 
 ## Dev Notes
 
@@ -245,17 +259,74 @@ If `project-context.md` is added later, reconcile this story guidance with that 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Codex GPT-5
 
 ### Debug Log References
 
+- `.venv\Scripts\python manage.py test apps.accounts.tests --settings=po_tracking.settings.development -v 2` (red run, then green run)
+- `.venv\Scripts\python manage.py makemigrations po accounts --settings=po_tracking.settings.development`
+- `.venv\Scripts\python manage.py migrate --settings=po_tracking.settings.development`
+- `.venv\Scripts\python manage.py check --settings=po_tracking.settings.development`
+- `.venv\Scripts\python manage.py test --settings=po_tracking.settings.development -v 2`
+- `.venv\Scripts\python -m unittest discover -s tests -v`
+
 ### Completion Notes List
 
-- Story status set to `ready-for-dev`.
-- Ultimate context engine analysis completed - comprehensive developer guide created.
-- Story includes implementation guardrails for custom user model sequencing, auth flow, session policy, and migration safety.
+- Replaced placeholder task list with AC-mapped implementation tasks and executed them in order.
+- Implemented `Supplier` and custom `accounts.User` models and wired `AUTH_USER_MODEL`.
+- Added session policy settings: `SESSION_COOKIE_AGE=1800` and `SESSION_SAVE_EVERY_REQUEST=True`.
+- Created initial migrations for `po` and `accounts` and verified migration chain applies successfully.
+- Implemented login/logout views and routes under `/accounts/`, including POST logout semantics.
+- Added `base_auth.html`, accessible login form template, and authenticated placeholder home route used as login redirect target.
+- Added comprehensive automated tests for model wiring, auth flow, invalid credential handling, logout session invalidation, and session expiration re-authentication behavior.
+- Validation complete: Django checks pass and full regression test suite passes.
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/1-2-custom-user-model-authentication.md` (this story context file)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (to be updated to `ready-for-dev` in step 6)
+- `apps/accounts/models.py`
+- `apps/accounts/views.py`
+- `apps/accounts/urls.py`
+- `apps/accounts/migrations/__init__.py`
+- `apps/accounts/migrations/0001_initial.py`
+- `apps/accounts/tests/__init__.py`
+- `apps/accounts/tests/test_models.py`
+- `apps/accounts/tests/test_views.py`
+- `apps/po/models.py`
+- `apps/po/migrations/__init__.py`
+- `apps/po/migrations/0001_initial.py`
+- `po_tracking/settings/base.py`
+- `po_tracking/urls.py`
+- `templates/base_auth.html`
+- `templates/accounts/login.html`
+- `templates/accounts/home.html`
+- `_bmad-output/implementation-artifacts/1-2-custom-user-model-authentication.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Claude Opus 4.6 on 2026-02-13
+**Outcome:** Approved with fixes applied
+
+### Findings (7 fixed, 2 low deferred)
+
+| # | Severity | Description | Resolution |
+|---|----------|-------------|------------|
+| H1 | HIGH | `home.html` was standalone HTML, not extending any base template | Fixed: now extends `base_auth.html`, shows username |
+| H2 | HIGH | `Supplier.code` lacked `unique=True` constraint | Fixed: added `unique=True`, updated migration |
+| H3 | HIGH | `LOGIN_REDIRECT_URL = "/"` hardcoded path instead of named URL | Fixed: changed to `"home"` |
+| M1 | MEDIUM | `AccountLogoutView` returned 405 on GET with no friendly handling | Fixed: GET now redirects to login page |
+| M2 | MEDIUM | `test_expired_session` used `time.sleep(2)` - slow and fragile | Fixed: replaced with direct session expiry date manipulation |
+| M3 | MEDIUM | No tests for `Supplier` model fields or `__str__` | Fixed: added `SupplierModelTests` class |
+| M4 | MEDIUM | `form.non_field_errors` rendered raw Django `<ul>` markup | Fixed: iterate errors as `<p>` tags |
+| L1 | LOW | `Supplier.__str__` untested | Covered by new M3 fix |
+| L2 | LOW | Home placeholder doesn't show logged-in user identity | Covered by H1 fix (added `{{ request.user.username }}`) |
+
+### Post-fix validation
+- 10/10 tests pass (including 2 new Supplier tests)
+- Django system check: 0 issues
+- All ACs verified as implemented
+
+## Change Log
+
+- 2026-02-13: Implemented Story 1.2 custom user model and authentication flow (models, settings, migrations, login/logout routes/views/templates, session policy checks, and automated tests). Story status set to `review`.
+- 2026-02-13: Senior developer code review completed. 7 issues fixed (3 HIGH, 4 MEDIUM). Added `unique=True` to Supplier.code, fixed template hierarchy, corrected LOGIN_REDIRECT_URL, improved logout GET handling, replaced slow test, added Supplier tests, cleaned up error rendering. Status set to `done`.

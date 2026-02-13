@@ -9,7 +9,12 @@
       "mcp__exa__web_search_exa",
       "Bash(powershell -Command:*)",
       "Bash(.venv\\\\Scripts\\\\python:*)",
-      "Bash(python -m unittest:*)"
+      "Bash(python -m unittest:*)",
+      "Bash(.venv\\\\Scripts\\\\python manage.py test:*)",
+      "Bash(D:\\\\Python\\\\PO_Tracking\\\\.venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(cmd /c:*)",
+      "WebFetch(domain:www.srihash.org)",
+      "Bash(powershell:*)"
     ]
   }
 }
