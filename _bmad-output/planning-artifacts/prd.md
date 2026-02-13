@@ -43,6 +43,12 @@ The product provides:
 - Exception-first planner views for late and at-risk lines
 - Supplier-request Excel generation to replace manual split workflows
 - Append-only audit trail for every operational change
+- Configurable data model with extensible custom columns for ERP-sourced and user-entered fields
+
+### Terminology
+
+- **Item** — product family or category grouping (higher level)
+- **SKU** — specific stock-keeping unit code within an item (lower level, maps to ERP item codes)
 
 ### Key Differentiator
 
@@ -270,36 +276,49 @@ PO_Tracking is a browser-based internal operational web application with server-
 - **FR4:** System can reconstruct historical batch deliveries from ERP DeliveredQty and InDate records during ingestion
 - **FR5:** System can perform a first-run baseline snapshot without change detection (initial data load)
 - **FR6:** System can report ingestion results including duration, PO lines processed, change events detected, new lines created, and errors encountered
-- **FR7:** System can identify and report PO lines with item codes not found in the cross-reference table after ingestion
+- **FR7:** System can identify and report PO lines with SKU codes not found in the cross-reference table after ingestion
 - **FR8:** System can replicate data from the primary write environment to the secondary read environment on a nightly schedule
+- **FR8a:** System can ingest Item (product family/category grouping above SKU), PO insert date (original PO creation date), and final customer fields from the supplier ERP during data extraction
+- **FR8b:** System can ingest up to 15 configurable custom columns from the supplier ERP: 5 date-type, 5 text-type, and 5 decimal-type fields, mapped to ERP SQL columns via admin configuration
+- **FR8c:** System can populate custom columns from either ERP read-only ingestion or direct user input in the application, with the data source (ERP or user-entered) tracked per field per PO line
 
 ### PO Visibility and Navigation
 
 - **FR9:** Expeditors can view a list of all active PO lines scoped to their assigned suppliers
 - **FR10:** Planners can view a list of all active PO lines across all suppliers
-- **FR11:** Users can filter the PO list by supplier, item, status, and delay classification (late, at-risk, on-track)
+- **FR11:** Users can filter the PO list by any displayed column including supplier, item, SKU, PO number, final customer, status, delay classification, source quality, ready quantity, date ranges, and any active custom columns
 - **FR12:** Users can sort the PO list by any displayed column, with due date as the default sort
-- **FR13:** System can display visual exception indicators on PO lines that are overdue or approaching their due date
+- **FR13:** System can display visual exception indicators on PO lines that are overdue or within a configurable number of days of their due date
 - **FR14:** Users can view PO lines updated within a specified time window (for example last 24 hours) for cross-timezone awareness
 - **FR15:** Users can view PO lines with no expeditor update within a configurable staleness threshold
 - **FR16:** Users can apply filter presets for common exception views (Late, At Risk, Updated Recently, No Response)
 - **FR17:** Users can manually refresh the current view data via a dedicated in-app refresh action
+- **FR17a:** Users can show or hide individual columns in the PO list view via a column chooser control
+- **FR17b:** System can persist each user's column visibility preferences across sessions
+- **FR17c:** System can apply role-based default column visibility (expeditor defaults differ from planner defaults) that users can override
+- **FR17d:** System can display Item (product family/category), PO insert date, and final customer as standard columns available in the PO list view
+- **FR17e:** System can display up to 15 admin-configured custom columns (5 date-type, 5 text-type, 5 decimal-type) in the PO list view, with admin-defined display labels
 
 ### PO Investigation and Detail
 
 - **FR18:** Users can view a PO line detail page showing the full chronological timeline of all date changes with who, when, source, and reason
 - **FR19:** Users can view the batch delivery table for a PO line showing historical batches and planned future batches
 - **FR20:** Users can view the current status and complete status transition history for a PO line
-- **FR21:** Users can view the remaining quantity and delivery progress (delivered versus outstanding) for a PO line
+- **FR21:** Users can view the remaining quantity and delivery progress (ordered versus ready versus dispatched versus delivered) for a PO line
 
 ### Milestone and Status Management
 
 - **FR22:** Expeditors can record or update milestone dates (production-ready, ready-to-dispatch) for PO lines within their supplier scope
+- **FR22a:** Expeditors can record ready quantity (goods produced but not yet dispatched) with a readiness date for PO lines within their supplier scope
+- **FR22b:** System can track partial production readiness, allowing multiple ready-quantity entries as suppliers complete production in increments
+- **FR22c:** System can display cumulative ready quantity alongside ordered quantity and remaining quantity, distinguishing between goods produced, goods dispatched, and goods outstanding
 - **FR23:** Expeditors can submit milestone updates only when date, reason, and source are provided; submissions missing any required field are rejected with validation feedback
 - **FR24:** Expeditors can classify each update source as "Supplier confirmed," "Expeditor estimate," or "No supplier response"
 - **FR25:** System can visually distinguish between confirmed, estimated, and no-response statuses in all views
 - **FR26:** System can store every milestone update as an append-only audit event with user, timestamp, previous value, new value, reason, and source
 - **FR27:** Users can add free-text notes or comments when recording a milestone update
+- **FR27a:** Expeditors can select multiple PO lines and apply the same milestone update (date, reason, source, ready quantity) to all selected lines in a single action
+- **FR27b:** Expeditors can edit milestone fields inline across multiple PO line rows with row-specific values before submitting all changes as a batch
 - **FR28:** System can manage PO line status transitions through the defined lifecycle: Planned -> In Production -> Ready to Dispatch -> Part Delivered -> Fully Delivered -> Cancelled/Closed
 
 ### Batch Tracking
@@ -313,7 +332,7 @@ PO_Tracking is a browser-based internal operational web application with server-
 ### Supplier Communication
 
 - **FR34:** Expeditors can generate a structured Excel file for a selected supplier containing all open PO lines for that supplier
-- **FR35:** System can pre-fill the Excel template with PO numbers, items, ordered quantity, remaining quantity, promised date, and current status
+- **FR35:** System can pre-fill the Excel template with PO numbers, item, SKU, ordered quantity, remaining quantity, promised date, current status, and final customer
 - **FR36:** System can include supplier response fields in the generated Excel: Ready Date, Qty Ready, and Comments
 
 ### User and Access Management
@@ -327,12 +346,15 @@ PO_Tracking is a browser-based internal operational web application with server-
 
 - **FR41:** Admins can create, edit, and deactivate user accounts with role assignment
 - **FR42:** Admins can assign and modify supplier scope for expeditor users
-- **FR43:** Admins can manage the item cross-reference table including individual and bulk operations
+- **FR43:** Admins can manage the SKU cross-reference table including individual and bulk operations
 - **FR44:** Admins can view ingestion job history with status, duration, record counts, and error details
 - **FR45:** Admins can view and filter the audit log by user, source type, date range, and event type
 - **FR46:** Admins can configure ERP connection parameters and ingestion schedule settings
 - **FR47:** Admins can configure system parameters including staleness thresholds and ingestion lookback window
-- **FR48:** System can flag unmapped items visibly in the UI rather than silently dropping them during ingestion
+- **FR48:** System can flag unmapped items with a distinct visual indicator in the PO list view and admin dashboard rather than silently dropping them during ingestion
+- **FR49:** Admins can configure custom columns by defining: display label, data type (date, text, or decimal), data source (ERP SQL column mapping or user-entered), and default visibility per role
+- **FR50:** Admins can activate or deactivate individual custom columns without losing existing data in those columns
+- **FR51:** Users can enter or update values in user-entered custom columns directly from the PO list view (inline) or PO detail panel
 
 ## Non-Functional Requirements
 
@@ -342,13 +364,13 @@ PO_Tracking is a browser-based internal operational web application with server-
 - **NFR2:** Partial list updates (filter, sort, refresh) complete within 2 seconds for datasets up to 5,000 active PO lines
 - **NFR3:** PO detail view (timeline plus batch table plus audit history) loads within 2 seconds
 - **NFR4:** Excel generation completes within 5 seconds for a single supplier with up to 200 PO lines
-- **NFR5:** System supports up to 10 concurrent users without observable performance degradation
+- **NFR5:** System supports up to 10 concurrent users while maintaining NFR1-NFR4 response time targets
 - **NFR6:** Additional cross-firewall latency up to 500ms round-trip is acceptable for remote read users
 - **NFR7:** Nightly ERP ingestion completes within 1 hour including snapshot, diff, change event generation, and historical batch reconstruction
 
 ### Security
 
-- **NFR8:** User passwords are stored using secure hashing (bcrypt or argon2), never plaintext or reversible encryption
+- **NFR8:** User passwords are stored using industry-standard cryptographic hashing, never plaintext or reversible encryption
 - **NFR9:** Role-based access control is enforced at the API boundary for supplier-scope restrictions
 - **NFR10:** Audit event storage is append-only with no application-level update or delete path
 - **NFR11:** ERP integration uses read-only SQL credentials with minimum necessary permissions
@@ -369,7 +391,7 @@ PO_Tracking is a browser-based internal operational web application with server-
 - **NFR20:** ERP integration remains read-only with no write-back behavior
 - **NFR21:** Data replication from the primary write environment to the secondary read environment completes within the nightly sync window (10:00-07:00 UTC)
 - **NFR22:** On replication failure, secondary read environment serves last successful sync and generates an admin alert
-- **NFR23:** Unmapped item codes are flagged for admin review without failing the full ingestion run
+- **NFR23:** Unmapped SKU codes are flagged for admin review without failing the full ingestion run
 
 ### Accessibility
 
@@ -380,5 +402,5 @@ PO_Tracking is a browser-based internal operational web application with server-
 ### Deployability and Operations
 
 - **NFR27:** Application updates are deployable by a single administrator within the maintenance window
-- **NFR28:** Application runtime components operate as managed background services behind an enterprise reverse proxy without requiring container runtime dependencies
+- **NFR28:** Application runtime components are deployable and operable by a single administrator without requiring container runtime infrastructure
 - **NFR29:** Ingestion failures, replication failures, and xref mapping gaps are recorded in the admin-visible event log within 60 seconds of detection, including timestamp, severity, and event type

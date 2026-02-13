@@ -1,0 +1,2895 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PO Timeline &amp; Batch Tracker — Design Direction Showcase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* ===================================================================
+           SHOWCASE SHELL — Navigation between directions
+           =================================================================== */
+        :root {
+            --po-dark-blue: #1a3a5c;
+            --po-mid-blue: #2563eb;
+            --po-light-blue: #dbeafe;
+            --po-amber: #d97706;
+            --po-amber-light: #fef3c7;
+            --po-red: #dc2626;
+            --po-red-light: #fee2e2;
+            --po-green: #16a34a;
+            --po-green-light: #dcfce7;
+            --po-grey-900: #111827;
+            --po-grey-700: #374151;
+            --po-grey-500: #6b7280;
+            --po-grey-400: #9ca3af;
+            --po-grey-300: #d1d5db;
+            --po-grey-200: #e5e7eb;
+            --po-grey-100: #f3f4f6;
+            --po-grey-50: #f9fafb;
+            --po-font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --po-mono: "Cascadia Code", "Consolas", "SF Mono", monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--po-font-stack);
+            background: #eef1f5;
+            color: var(--po-grey-900);
+        }
+
+        /* Showcase top navigation */
+        .showcase-nav {
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            background: var(--po-dark-blue);
+            border-bottom: 3px solid var(--po-mid-blue);
+        }
+        .showcase-nav .nav-link {
+            color: rgba(255,255,255,.75);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 0;
+            transition: background .15s, color .15s;
+        }
+        .showcase-nav .nav-link:hover,
+        .showcase-nav .nav-link.active {
+            color: #fff;
+            background: rgba(255,255,255,.1);
+        }
+        .showcase-nav .showcase-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: .02em;
+        }
+
+        /* Direction section wrapper */
+        .direction-section {
+            padding: 40px 0 60px;
+        }
+        .direction-section:nth-child(odd) {
+            background: #eef1f5;
+        }
+        .direction-section:nth-child(even) {
+            background: #e2e6ec;
+        }
+        .direction-header {
+            margin-bottom: 24px;
+        }
+        .direction-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--po-dark-blue);
+            margin-bottom: 4px;
+        }
+        .direction-header p {
+            font-size: 15px;
+            color: var(--po-grey-500);
+            margin: 0;
+        }
+
+        /* Mockup frame */
+        .mockup-frame {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+            background: #fff;
+        }
+
+        /* ===================================================================
+           SHARED COMPONENT STYLES (used across directions with modifiers)
+           =================================================================== */
+
+        /* Badge: Status */
+        .badge-status {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 7px;
+            border-radius: 10px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            line-height: 1;
+        }
+        .badge-status i { font-size: 10px; }
+        .badge-on-track { background: var(--po-green-light); color: var(--po-green); }
+        .badge-at-risk  { background: var(--po-amber-light); color: var(--po-amber); }
+        .badge-late     { background: var(--po-red-light);   color: var(--po-red); }
+
+        /* Badge: Source */
+        .badge-source {
+            font-size: 10px;
+            font-weight: 500;
+            padding: 1px 6px;
+            border-radius: 8px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            line-height: 1;
+        }
+        .badge-source i { font-size: 9px; }
+        .badge-confirmed  { background: var(--po-green-light); color: var(--po-green); }
+        .badge-estimate   { background: var(--po-amber-light); color: var(--po-amber); }
+        .badge-no-response { background: var(--po-red-light);  color: var(--po-red); }
+
+        /* Staleness text */
+        .staleness {
+            font-size: 11px;
+            color: var(--po-grey-400);
+            white-space: nowrap;
+        }
+        .staleness.stale-warn {
+            color: var(--po-amber);
+        }
+        .staleness.stale-danger {
+            color: var(--po-red);
+        }
+
+        /* Monospace PO numbers */
+        .po-mono {
+            font-family: var(--po-mono);
+            font-size: 12px;
+            letter-spacing: -.02em;
+        }
+
+        /* Update action button (small) */
+        .btn-update {
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 4px;
+        }
+
+        /* Delay column styling */
+        .delay-positive {
+            color: var(--po-red);
+            font-weight: 600;
+        }
+        .delay-zero {
+            color: var(--po-green);
+            font-weight: 500;
+        }
+
+        /* ===================================================================
+           DIRECTION A — Clean Operational
+           =================================================================== */
+        .dir-a .da-navbar {
+            background: #fff;
+            border-bottom: 2px solid var(--po-light-blue);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .dir-a .da-navbar .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dir-a .da-navbar .logo-placeholder {
+            width: 28px; height: 28px;
+            background: var(--po-dark-blue);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .dir-a .da-navbar .app-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--po-dark-blue);
+        }
+        .dir-a .da-navbar .user-menu {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 13px; color: var(--po-grey-500);
+        }
+        .dir-a .da-navbar .user-menu .avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--po-light-blue); color: var(--po-mid-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600;
+        }
+
+        .dir-a .da-filter-bar {
+            background: #fff;
+            border-bottom: 1px solid var(--po-grey-200);
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dir-a .da-filter-bar .filter-pills {
+            display: flex; gap: 4px;
+        }
+        .dir-a .da-filter-bar .filter-pill {
+            font-size: 12px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--po-grey-300);
+            background: #fff;
+            color: var(--po-grey-700);
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .dir-a .da-filter-bar .filter-pill:hover {
+            border-color: var(--po-mid-blue);
+            color: var(--po-mid-blue);
+        }
+        .dir-a .da-filter-bar .filter-pill.active {
+            background: var(--po-mid-blue);
+            border-color: var(--po-mid-blue);
+            color: #fff;
+        }
+        .dir-a .da-filter-bar .filter-pill .badge-count {
+            font-size: 10px;
+            background: rgba(0,0,0,.12);
+            color: inherit;
+            padding: 0 5px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+        .dir-a .da-filter-bar .filter-pill.active .badge-count {
+            background: rgba(255,255,255,.25);
+        }
+        .dir-a .da-filter-bar .supplier-dropdown {
+            margin-left: auto;
+        }
+        .dir-a .da-filter-bar .supplier-dropdown select {
+            font-size: 12px;
+            padding: 4px 28px 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--po-grey-300);
+            color: var(--po-grey-700);
+        }
+
+        .dir-a .da-table-wrap {
+            background: #fff;
+            padding: 0;
+        }
+        .dir-a .da-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+        .dir-a .da-table thead th {
+            background: var(--po-grey-50);
+            border-bottom: 2px solid var(--po-grey-200);
+            padding: 6px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--po-grey-500);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .dir-a .da-table tbody td {
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--po-grey-100);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .dir-a .da-table tbody tr:nth-child(even) {
+            background: var(--po-grey-50);
+        }
+        .dir-a .da-table tbody tr:hover {
+            background: var(--po-light-blue) !important;
+        }
+        .dir-a .da-table tbody tr:hover td {
+            border-bottom-color: #bfdbfe;
+        }
+        .dir-a .da-table .btn-update {
+            background: var(--po-mid-blue);
+            color: #fff;
+            border: none;
+            opacity: 0;
+            transition: opacity .15s;
+        }
+        .dir-a .da-table tbody tr:hover .btn-update {
+            opacity: 1;
+        }
+        .dir-a .da-table .row-with-action .btn-update {
+            opacity: 1;
+        }
+
+        /* ===================================================================
+           DIRECTION B — Data Command Center
+           =================================================================== */
+        .dir-b .db-navbar {
+            background: var(--po-dark-blue);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .dir-b .db-navbar .logo-area {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .dir-b .db-navbar .logo-placeholder {
+            width: 28px; height: 28px;
+            background: rgba(255,255,255,.15);
+            border: 1.5px solid rgba(255,255,255,.3);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .dir-b .db-navbar .app-name {
+            font-size: 15px; font-weight: 600; color: #fff;
+        }
+        .dir-b .db-navbar .user-menu {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 13px; color: rgba(255,255,255,.7);
+        }
+        .dir-b .db-navbar .user-menu .avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--po-mid-blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600;
+        }
+
+        .dir-b .db-filter-bar {
+            background: #1e3e62;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            padding: 0 20px;
+            display: flex;
+            align-items: stretch;
+        }
+        .dir-b .db-filter-bar .filter-tabs {
+            display: flex;
+        }
+        .dir-b .db-filter-bar .filter-tab {
+            font-size: 12px;
+            padding: 10px 18px;
+            color: rgba(255,255,255,.6);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .dir-b .db-filter-bar .filter-tab:hover {
+            color: rgba(255,255,255,.9);
+            background: rgba(255,255,255,.04);
+        }
+        .dir-b .db-filter-bar .filter-tab.active {
+            color: #fff;
+            border-bottom-color: var(--po-mid-blue);
+        }
+        .dir-b .db-filter-bar .filter-tab .tab-count {
+            font-size: 10px;
+            background: rgba(255,255,255,.15);
+            padding: 0 6px;
+            border-radius: 8px;
+        }
+        .dir-b .db-filter-bar .filter-tab.active .tab-count {
+            background: var(--po-mid-blue);
+        }
+        .dir-b .db-filter-bar .filter-tab.tab-late .tab-count {
+            background: var(--po-red);
+            color: #fff;
+        }
+        .dir-b .db-filter-bar .supplier-dropdown {
+            margin-left: auto;
+            display: flex; align-items: center;
+        }
+        .dir-b .db-filter-bar .supplier-dropdown select {
+            font-size: 12px;
+            padding: 4px 28px 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,.2);
+            background: rgba(255,255,255,.08);
+            color: #fff;
+        }
+        .dir-b .db-filter-bar .supplier-dropdown select option {
+            background: var(--po-dark-blue); color: #fff;
+        }
+
+        .dir-b .db-table-wrap {
+            background: #f1f3f7;
+            padding: 0;
+        }
+        .dir-b .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+        .dir-b .db-table thead th {
+            background: #283d56;
+            color: rgba(255,255,255,.8);
+            border-bottom: none;
+            padding: 7px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .dir-b .db-table tbody td {
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--po-grey-200);
+            vertical-align: middle;
+            white-space: nowrap;
+            background: #fff;
+        }
+        .dir-b .db-table tbody tr:nth-child(even) td {
+            background: #f7f8fa;
+        }
+        .dir-b .db-table tbody tr:hover td {
+            background: var(--po-light-blue) !important;
+            border-bottom-color: #bfdbfe;
+        }
+        .dir-b .db-table tbody tr {
+            border-left: 3px solid transparent;
+        }
+        .dir-b .db-table tbody tr.row-late {
+            border-left-color: var(--po-red);
+        }
+        .dir-b .db-table tbody tr.row-at-risk {
+            border-left-color: var(--po-amber);
+        }
+        .dir-b .db-table .btn-update {
+            background: var(--po-mid-blue);
+            color: #fff;
+            border: none;
+            opacity: 0;
+            transition: opacity .15s;
+        }
+        .dir-b .db-table tbody tr:hover .btn-update {
+            opacity: 1;
+        }
+        .dir-b .db-table .row-with-action .btn-update {
+            opacity: 1;
+        }
+
+        /* Bold badges for Direction B */
+        .dir-b .badge-status {
+            font-weight: 600;
+            padding: 2px 8px;
+        }
+        .dir-b .badge-on-track { background: var(--po-green); color: #fff; }
+        .dir-b .badge-at-risk  { background: var(--po-amber); color: #fff; }
+        .dir-b .badge-late     { background: var(--po-red);   color: #fff; }
+
+        /* Bold source badges for Direction B */
+        .dir-b .badge-source {
+            font-weight: 600;
+            padding: 2px 8px;
+        }
+        .dir-b .badge-confirmed  { background: var(--po-green); color: #fff; }
+        .dir-b .badge-estimate   { background: var(--po-amber); color: #fff; }
+        .dir-b .badge-no-response { background: var(--po-red); color: #fff; }
+
+        /* Direction B — Navbar role badge & progress */
+        .dir-b .db-navbar .role-badge {
+            font-size: 10px;
+            font-weight: 600;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.3);
+            color: rgba(255,255,255,.85);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 12px;
+        }
+        .dir-b .db-navbar .progress-area {
+            display: flex; align-items: center; gap: 8px;
+            margin-left: auto; margin-right: 16px;
+            font-size: 11px; color: rgba(255,255,255,.6);
+        }
+        .dir-b .db-navbar .mini-progress {
+            width: 60px; height: 4px;
+            background: rgba(255,255,255,.15);
+            border-radius: 2px; overflow: hidden;
+        }
+        .dir-b .db-navbar .mini-progress-fill {
+            height: 100%; background: #60a5fa; border-radius: 2px;
+        }
+
+        /* Direction B — Action Toolbar */
+        .dir-b .db-action-toolbar {
+            background: #fff;
+            border-bottom: 1px solid var(--po-grey-200);
+            padding: 6px 16px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 12px;
+        }
+        .dir-b .db-action-toolbar .select-info {
+            display: flex; align-items: center; gap: 8px;
+            color: var(--po-grey-700);
+        }
+        .dir-b .db-action-toolbar .select-info input[type="checkbox"] {
+            width: 14px; height: 14px; accent-color: var(--po-mid-blue);
+        }
+        .dir-b .db-action-toolbar .selected-count {
+            font-weight: 600; color: var(--po-mid-blue);
+        }
+        .dir-b .db-action-toolbar .tb-btn {
+            font-size: 11px; padding: 4px 12px; border-radius: 4px;
+            cursor: pointer; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 4px; white-space: nowrap; border: none;
+        }
+        .dir-b .db-action-toolbar .tb-btn-primary {
+            background: var(--po-mid-blue); color: #fff;
+        }
+        .dir-b .db-action-toolbar .tb-btn-outline {
+            background: #fff; color: var(--po-grey-700);
+            border: 1px solid var(--po-grey-300);
+        }
+        .dir-b .db-action-toolbar .tb-btn-toggle {
+            background: #fff; color: var(--po-grey-500);
+            border: 1px solid var(--po-grey-300);
+        }
+        .dir-b .db-action-toolbar .tb-btn-toggle.active {
+            background: var(--po-light-blue); color: var(--po-mid-blue);
+            border-color: var(--po-mid-blue);
+        }
+        .dir-b .db-action-toolbar .toolbar-right {
+            margin-left: auto; display: flex; align-items: center; gap: 10px;
+            color: var(--po-grey-500); font-size: 11px;
+        }
+        .dir-b .db-action-toolbar .toolbar-right .btn-refresh {
+            background: none; border: 1px solid var(--po-grey-300); border-radius: 4px;
+            padding: 3px 8px; color: var(--po-grey-500); cursor: pointer; font-size: 12px;
+        }
+
+        /* Direction B — Column Filter Row */
+        .dir-b .db-table thead tr.filter-row th {
+            background: #344a63;
+            padding: 3px 4px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+        .dir-b .db-table thead tr.filter-row input,
+        .dir-b .db-table thead tr.filter-row select {
+            width: 100%;
+            height: 24px;
+            font-size: 11px;
+            padding: 1px 5px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 3px;
+            background: rgba(255,255,255,.1);
+            color: #fff;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .dir-b .db-table thead tr.filter-row input::placeholder {
+            color: rgba(255,255,255,.4);
+        }
+        .dir-b .db-table thead tr.filter-row select option {
+            background: #283d56; color: #fff;
+        }
+        .dir-b .db-table thead tr.header-row th {
+            cursor: pointer;
+            user-select: none;
+        }
+        .dir-b .db-table thead tr.header-row th .sort-icon {
+            font-size: 9px; margin-left: 3px; opacity: .4;
+        }
+        .dir-b .db-table thead tr.header-row th .sort-icon.active {
+            opacity: 1; color: #60a5fa;
+        }
+
+        /* Direction B — Checkbox column */
+        .dir-b .db-table .col-check {
+            width: 32px; text-align: center;
+        }
+        .dir-b .db-table input[type="checkbox"] {
+            width: 14px; height: 14px; accent-color: var(--po-mid-blue);
+            cursor: pointer;
+        }
+
+        /* Direction B — Selected row highlight */
+        .dir-b .db-table tbody tr.row-selected td {
+            background: #bfdbfe !important;
+        }
+
+        /* Direction B — Inline edit row */
+        .dir-b .db-table tbody tr.row-inline-edit td {
+            background: #fffbeb !important;
+            border-bottom-color: #fde68a;
+        }
+        .dir-b .db-table tbody tr.row-inline-edit input,
+        .dir-b .db-table tbody tr.row-inline-edit select {
+            font-size: 11px; padding: 1px 5px;
+            border: 1px solid var(--po-grey-300); border-radius: 3px;
+            height: 22px; background: #fff; box-sizing: border-box;
+        }
+        .dir-b .db-table tbody tr.row-inline-edit .btn-save {
+            font-size: 10px; padding: 2px 8px; border-radius: 3px;
+            background: var(--po-green); color: #fff; border: none; cursor: pointer;
+        }
+        .dir-b .db-table tbody tr.row-inline-edit .btn-cancel-edit {
+            font-size: 10px; padding: 2px 8px; border-radius: 3px;
+            background: none; color: var(--po-grey-500); border: 1px solid var(--po-grey-300);
+            cursor: pointer;
+        }
+
+        /* Direction B — Ready column mini-progress */
+        .dir-b .ready-cell {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .dir-b .ready-text {
+            font-size: 12px; font-family: var(--po-mono); letter-spacing: -.02em;
+        }
+        .dir-b .ready-bar {
+            width: 100%; height: 3px; background: var(--po-grey-200);
+            border-radius: 2px; overflow: hidden;
+        }
+        .dir-b .ready-bar-fill {
+            height: 100%; border-radius: 2px;
+        }
+        .dir-b .ready-bar-fill.fill-green { background: var(--po-green); }
+        .dir-b .ready-bar-fill.fill-amber { background: var(--po-amber); }
+        .dir-b .ready-bar-fill.fill-red   { background: var(--po-red); }
+        .dir-b .ready-bar-fill.fill-full  { background: var(--po-green); }
+
+        /* Direction B — Bulk Update Floating Toolbar */
+        .dir-b .db-bulk-toolbar {
+            position: sticky; top: 0; z-index: 10;
+            background: var(--po-mid-blue);
+            color: #fff;
+            padding: 8px 16px;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        }
+        .dir-b .db-bulk-toolbar .bulk-count {
+            font-weight: 600; margin-right: 8px;
+        }
+        .dir-b .db-bulk-toolbar label {
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: .04em; opacity: .8; margin-right: 4px;
+        }
+        .dir-b .db-bulk-toolbar input,
+        .dir-b .db-bulk-toolbar select {
+            font-size: 11px; padding: 3px 6px; border: 1px solid rgba(255,255,255,.3);
+            border-radius: 3px; background: rgba(255,255,255,.15); color: #fff;
+            height: 26px;
+        }
+        .dir-b .db-bulk-toolbar input::placeholder {
+            color: rgba(255,255,255,.5);
+        }
+        .dir-b .db-bulk-toolbar select option {
+            background: var(--po-mid-blue); color: #fff;
+        }
+        .dir-b .db-bulk-toolbar .bulk-radio-group {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .dir-b .db-bulk-toolbar .bulk-radio-group label {
+            font-size: 11px; text-transform: none; letter-spacing: 0;
+            opacity: 1; display: flex; align-items: center; gap: 3px; cursor: pointer;
+        }
+        .dir-b .db-bulk-toolbar .bulk-radio-group input[type="radio"] {
+            width: 12px; height: 12px; accent-color: #fff;
+        }
+        .dir-b .db-bulk-toolbar .btn-bulk-apply {
+            font-size: 11px; padding: 4px 14px; border-radius: 4px;
+            background: #fff; color: var(--po-mid-blue); border: none;
+            font-weight: 600; cursor: pointer; margin-left: auto;
+        }
+        .dir-b .db-bulk-toolbar .btn-bulk-cancel {
+            font-size: 11px; padding: 4px 14px; border-radius: 4px;
+            background: transparent; color: rgba(255,255,255,.8);
+            border: 1px solid rgba(255,255,255,.4); cursor: pointer;
+        }
+
+        /* Direction B — Slide-over Detail Panel */
+        .dir-b .db-slideover-overlay {
+            position: relative;
+        }
+        .dir-b .db-slideover {
+            position: absolute; top: 0; right: 0; bottom: 0;
+            width: 450px;
+            background: #fff;
+            box-shadow: -4px 0 24px rgba(0,0,0,.15);
+            z-index: 20;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+            border-left: 1px solid var(--po-grey-200);
+        }
+        .dir-b .db-slideover .panel-header {
+            background: var(--po-dark-blue);
+            color: #fff; padding: 14px 16px;
+            display: flex; flex-direction: column; gap: 4px;
+            position: relative;
+        }
+        .dir-b .db-slideover .panel-header .panel-title {
+            font-size: 14px; font-weight: 600;
+        }
+        .dir-b .db-slideover .panel-header .panel-subtitle {
+            font-size: 12px; color: rgba(255,255,255,.7);
+        }
+        .dir-b .db-slideover .panel-header .btn-close-panel {
+            position: absolute; top: 12px; right: 12px;
+            background: none; border: none; color: rgba(255,255,255,.7);
+            font-size: 18px; cursor: pointer; line-height: 1;
+        }
+        .dir-b .db-slideover .panel-header .btn-close-panel:hover {
+            color: #fff;
+        }
+        .dir-b .db-slideover .panel-body {
+            padding: 16px; flex: 1;
+        }
+        .dir-b .db-slideover .panel-section {
+            margin-bottom: 20px;
+        }
+        .dir-b .db-slideover .panel-section-title {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .04em; color: var(--po-grey-500);
+            margin-bottom: 10px; padding-bottom: 4px;
+            border-bottom: 1px solid var(--po-grey-200);
+        }
+
+        /* Quantity progress bar in panel */
+        .dir-b .qty-progress {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .dir-b .qty-bar-track {
+            display: flex; height: 20px; border-radius: 4px;
+            overflow: hidden; background: var(--po-grey-100);
+        }
+        .dir-b .qty-bar-segment {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 600; color: #fff;
+            transition: width .3s;
+        }
+        .dir-b .qty-bar-segment.seg-ordered { background: var(--po-grey-300); color: var(--po-grey-700); }
+        .dir-b .qty-bar-segment.seg-ready { background: var(--po-mid-blue); }
+        .dir-b .qty-bar-segment.seg-dispatched { background: var(--po-amber); }
+        .dir-b .qty-bar-segment.seg-delivered { background: var(--po-green); }
+        .dir-b .qty-bar-legend {
+            display: flex; gap: 14px; font-size: 10px; color: var(--po-grey-500);
+        }
+        .dir-b .qty-bar-legend span {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .dir-b .qty-bar-legend .legend-dot {
+            width: 8px; height: 8px; border-radius: 2px; display: inline-block;
+        }
+
+        /* Audit timeline in panel */
+        .dir-b .audit-timeline {
+            display: flex; flex-direction: column; gap: 0;
+        }
+        .dir-b .audit-entry {
+            display: flex; gap: 10px; padding: 8px 0;
+            border-bottom: 1px solid var(--po-grey-100);
+            font-size: 12px; line-height: 1.4;
+        }
+        .dir-b .audit-entry:last-child { border-bottom: none; }
+        .dir-b .audit-dot-col {
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 2px;
+        }
+        .dir-b .audit-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--po-mid-blue); flex-shrink: 0;
+        }
+        .dir-b .audit-line {
+            width: 2px; flex: 1; background: var(--po-grey-200); margin-top: 4px;
+        }
+        .dir-b .audit-content {
+            flex: 1;
+        }
+        .dir-b .audit-meta {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 11px; color: var(--po-grey-500); margin-bottom: 3px;
+        }
+        .dir-b .audit-meta .audit-user { font-weight: 600; color: var(--po-grey-700); }
+        .dir-b .audit-change {
+            font-size: 12px; color: var(--po-grey-700);
+        }
+        .dir-b .audit-change .change-label {
+            font-weight: 500; color: var(--po-grey-500);
+        }
+        .dir-b .audit-change .change-old {
+            text-decoration: line-through; color: var(--po-grey-400);
+        }
+        .dir-b .audit-change .change-new {
+            font-weight: 600; color: var(--po-dark-blue);
+        }
+        .dir-b .audit-reason {
+            font-size: 11px; color: var(--po-grey-500); font-style: italic;
+            margin-top: 2px;
+        }
+
+        /* Batch table in panel */
+        .dir-b .batch-table {
+            width: 100%; border-collapse: collapse; font-size: 11px;
+        }
+        .dir-b .batch-table th {
+            background: var(--po-grey-50); padding: 4px 8px;
+            font-weight: 600; font-size: 10px; text-transform: uppercase;
+            letter-spacing: .04em; color: var(--po-grey-500);
+            border-bottom: 1px solid var(--po-grey-200); text-align: left;
+        }
+        .dir-b .batch-table td {
+            padding: 4px 8px; border-bottom: 1px solid var(--po-grey-100);
+            color: var(--po-grey-700);
+        }
+        .dir-b .batch-table .batch-badge {
+            font-size: 10px; padding: 1px 6px; border-radius: 8px;
+            font-weight: 500;
+        }
+        .dir-b .batch-table .batch-delivered {
+            background: var(--po-green-light); color: var(--po-green);
+        }
+        .dir-b .batch-table .batch-planned {
+            background: var(--po-light-blue); color: var(--po-mid-blue);
+        }
+
+        /* Direction B — Update button always visible */
+        .dir-b .db-table .btn-update-outline {
+            font-size: 10px; padding: 2px 8px; border-radius: 3px;
+            background: none; color: var(--po-mid-blue);
+            border: 1px solid var(--po-mid-blue); cursor: pointer;
+            white-space: nowrap;
+        }
+        .dir-b .db-table .btn-update-outline:hover {
+            background: var(--po-mid-blue); color: #fff;
+        }
+
+        /* Direction B — Table horizontal scroll for extra columns */
+        .dir-b .db-table-wrap {
+            overflow-x: auto;
+        }
+        .dir-b .db-table {
+            min-width: 1500px;
+        }
+        .dir-b .db-table thead th {
+            font-size: 10px;
+            padding: 6px 6px;
+        }
+        .dir-b .db-table tbody td {
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+
+        /* Direction B — Column Chooser */
+        .dir-b .db-col-chooser-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .dir-b .db-col-chooser {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            width: 280px;
+            max-height: 420px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid var(--po-grey-200);
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.15);
+            z-index: 50;
+            padding: 0;
+        }
+        .dir-b .db-col-chooser .chooser-title {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 10px 14px 6px;
+            color: var(--po-grey-700);
+            border-bottom: 1px solid var(--po-grey-100);
+        }
+        .dir-b .db-col-chooser .chooser-list {
+            list-style: none;
+            margin: 0;
+            padding: 6px 0;
+        }
+        .dir-b .db-col-chooser .chooser-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 14px;
+            font-size: 12px;
+            color: var(--po-grey-700);
+            cursor: pointer;
+        }
+        .dir-b .db-col-chooser .chooser-list li:hover {
+            background: var(--po-grey-50);
+        }
+        .dir-b .db-col-chooser .chooser-list li input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--po-mid-blue);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .dir-b .db-col-chooser .chooser-list li.custom-col {
+            font-style: italic;
+            color: var(--po-grey-500);
+        }
+        .dir-b .db-col-chooser .chooser-list li.custom-col .custom-tag {
+            font-size: 9px;
+            background: var(--po-grey-100);
+            color: var(--po-grey-500);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-style: normal;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .dir-b .db-col-chooser .chooser-divider {
+            height: 1px;
+            background: var(--po-grey-200);
+            margin: 4px 0;
+        }
+        .dir-b .db-col-chooser .chooser-note {
+            font-size: 10px;
+            color: var(--po-grey-400);
+            padding: 6px 14px 10px;
+            font-style: italic;
+            border-top: 1px solid var(--po-grey-100);
+        }
+
+        /* Direction B — Ready column 3-segment mini bar */
+        .dir-b .ready-bar-segments {
+            display: flex;
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            overflow: hidden;
+            background: var(--po-grey-200);
+        }
+        .dir-b .ready-bar-segments .seg-delivered {
+            height: 100%;
+            background: var(--po-green);
+        }
+        .dir-b .ready-bar-segments .seg-ready {
+            height: 100%;
+            background: var(--po-mid-blue);
+        }
+        .dir-b .ready-bar-segments .seg-remaining {
+            height: 100%;
+            background: var(--po-grey-200);
+        }
+
+        /* Direction B — Quantity progress bar 3-segment (slide-over panel) */
+        .dir-b .qty-bar-segment.seg-delivered-new { background: #16a34a; }
+        .dir-b .qty-bar-segment.seg-ready-new { background: #2563eb; }
+        .dir-b .qty-bar-segment.seg-remaining-new { background: #d1d5db; color: var(--po-grey-700); }
+        .dir-b .qty-progress-note {
+            font-size: 10px;
+            color: var(--po-grey-400);
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        /* ===================================================================
+           DIRECTION C — Excel Evolution
+           =================================================================== */
+        .dir-c .dc-toolbar {
+            background: var(--po-grey-100);
+            border-bottom: 1px solid var(--po-grey-300);
+            height: 36px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 2px;
+        }
+        .dir-c .dc-toolbar .logo-placeholder {
+            width: 22px; height: 22px;
+            background: var(--po-dark-blue);
+            border-radius: 2px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 10px;
+        }
+        .dir-c .dc-toolbar .app-name {
+            font-size: 12px; font-weight: 600; color: var(--po-grey-700);
+            margin-left: 6px; margin-right: 16px;
+        }
+        .dir-c .dc-toolbar .tb-sep {
+            width: 1px; height: 20px; background: var(--po-grey-300); margin: 0 4px;
+        }
+        .dir-c .dc-toolbar .tb-btn {
+            font-size: 11px;
+            padding: 2px 8px;
+            border: 1px solid var(--po-grey-300);
+            background: #fff;
+            color: var(--po-grey-700);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background .1s;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 4px;
+            white-space: nowrap;
+        }
+        .dir-c .dc-toolbar .tb-btn:hover {
+            background: var(--po-grey-200);
+        }
+        .dir-c .dc-toolbar .tb-btn.active {
+            background: var(--po-light-blue);
+            border-color: var(--po-mid-blue);
+            color: var(--po-mid-blue);
+        }
+        .dir-c .dc-toolbar .user-area {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--po-grey-500);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .dir-c .dc-filter-row {
+            background: var(--po-grey-100);
+            border-bottom: 1px solid var(--po-grey-300);
+            padding: 3px 8px;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px;
+        }
+        .dir-c .dc-filter-row label {
+            color: var(--po-grey-500); font-size: 11px;
+        }
+        .dir-c .dc-filter-row select {
+            font-size: 11px; padding: 1px 20px 1px 6px; border-radius: 2px;
+            border: 1px solid var(--po-grey-300);
+        }
+
+        .dir-c .dc-table-wrap {
+            background: #fff;
+            padding: 0;
+        }
+        .dir-c .dc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+        .dir-c .dc-table thead th {
+            background: #e8eaed;
+            border: 1px solid #c4c7cc;
+            padding: 4px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--po-grey-700);
+            white-space: nowrap;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .dir-c .dc-table tbody td {
+            padding: 3px 8px;
+            border: 1px solid #e0e2e6;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .dir-c .dc-table tbody tr:hover {
+            background: #e8f0fe !important;
+        }
+        .dir-c .dc-table tbody tr:hover td {
+            border-color: #b8cfe8;
+        }
+        .dir-c .dc-table .btn-update {
+            background: #fff;
+            color: var(--po-mid-blue);
+            border: 1px solid var(--po-mid-blue);
+            font-size: 10px;
+            padding: 0 6px;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity .1s;
+        }
+        .dir-c .dc-table tbody tr:hover .btn-update {
+            opacity: 1;
+        }
+        .dir-c .dc-table .row-with-action .btn-update {
+            opacity: 1;
+        }
+
+        /* Compact badges for Direction C */
+        .dir-c .badge-status {
+            font-size: 10px; padding: 1px 5px; border-radius: 2px;
+        }
+        .dir-c .badge-source {
+            font-size: 9px; padding: 0 4px; border-radius: 2px;
+        }
+
+        /* ===================================================================
+           DIRECTION D — Focused Workflow
+           =================================================================== */
+        .dir-d .dd-layout {
+            display: flex;
+            min-height: 640px;
+        }
+
+        .dir-d .dd-navbar {
+            background: var(--po-dark-blue);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .dir-d .dd-navbar .logo-area {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .dir-d .dd-navbar .logo-placeholder {
+            width: 28px; height: 28px;
+            background: rgba(255,255,255,.15);
+            border: 1.5px solid rgba(255,255,255,.3);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .dir-d .dd-navbar .app-name {
+            font-size: 15px; font-weight: 600; color: #fff;
+        }
+        .dir-d .dd-navbar .progress-indicator {
+            margin-left: 24px;
+            display: flex; align-items: center; gap: 8px;
+            color: rgba(255,255,255,.8);
+            font-size: 13px;
+        }
+        .dir-d .dd-navbar .progress-indicator .progress {
+            width: 120px; height: 6px; background: rgba(255,255,255,.15);
+            border-radius: 3px; overflow: hidden;
+        }
+        .dir-d .dd-navbar .progress-indicator .progress-bar {
+            background: var(--po-green);
+            height: 100%;
+            border-radius: 3px;
+        }
+        .dir-d .dd-navbar .user-menu {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 13px; color: rgba(255,255,255,.7);
+        }
+        .dir-d .dd-navbar .user-menu .avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--po-mid-blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600;
+        }
+
+        .dir-d .dd-sidebar {
+            width: 220px;
+            background: #f5f6f8;
+            border-right: 1px solid var(--po-grey-200);
+            padding: 12px 0;
+            flex-shrink: 0;
+        }
+        .dir-d .dd-sidebar .sb-section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--po-grey-400);
+            padding: 8px 16px 4px;
+            font-weight: 600;
+        }
+        .dir-d .dd-sidebar .sb-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--po-grey-700);
+            cursor: pointer;
+            transition: background .1s;
+            text-decoration: none;
+        }
+        .dir-d .dd-sidebar .sb-item:hover {
+            background: var(--po-grey-200);
+        }
+        .dir-d .dd-sidebar .sb-item.active {
+            background: var(--po-light-blue);
+            color: var(--po-mid-blue);
+            font-weight: 600;
+        }
+        .dir-d .dd-sidebar .sb-item i {
+            font-size: 14px; width: 18px; text-align: center;
+        }
+        .dir-d .dd-sidebar .sb-item .sb-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--po-grey-200);
+            color: var(--po-grey-500);
+            padding: 0 6px;
+            border-radius: 8px;
+        }
+        .dir-d .dd-sidebar .sb-item.active .sb-count {
+            background: var(--po-mid-blue);
+            color: #fff;
+        }
+        .dir-d .dd-sidebar .sb-item.has-alert .sb-count {
+            background: var(--po-red);
+            color: #fff;
+        }
+        .dir-d .dd-sidebar .sb-divider {
+            height: 1px; background: var(--po-grey-200); margin: 8px 16px;
+        }
+
+        .dir-d .dd-main {
+            flex: 1;
+            min-width: 0;
+            background: #fff;
+        }
+
+        .dir-d .dd-group-header {
+            background: var(--po-grey-50);
+            border-bottom: 1px solid var(--po-grey-200);
+            padding: 6px 16px;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+        }
+        .dir-d .dd-group-header:hover {
+            background: var(--po-grey-100);
+        }
+        .dir-d .dd-group-header .gh-supplier {
+            font-size: 13px; font-weight: 600; color: var(--po-grey-900);
+        }
+        .dir-d .dd-group-header .gh-count {
+            font-size: 11px; color: var(--po-grey-400);
+        }
+        .dir-d .dd-group-header .gh-progress {
+            margin-left: auto;
+            font-size: 11px; color: var(--po-grey-500);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .dir-d .dd-group-header .gh-progress .progress {
+            width: 60px; height: 4px; background: var(--po-grey-200);
+            border-radius: 2px;
+        }
+        .dir-d .dd-group-header .gh-progress .progress-bar {
+            background: var(--po-green); border-radius: 2px;
+        }
+
+        .dir-d .dd-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+        .dir-d .dd-table thead th {
+            background: var(--po-grey-50);
+            border-bottom: 2px solid var(--po-grey-200);
+            padding: 5px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--po-grey-500);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .dir-d .dd-table tbody td {
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--po-grey-100);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .dir-d .dd-table tbody tr:hover {
+            background: var(--po-light-blue);
+        }
+        .dir-d .dd-table .btn-update-icon {
+            width: 24px; height: 24px;
+            border-radius: 4px;
+            border: 1px solid var(--po-mid-blue);
+            background: #fff;
+            color: var(--po-mid-blue);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .dir-d .dd-table .btn-update-icon:hover {
+            background: var(--po-mid-blue);
+            color: #fff;
+        }
+        .dir-d .dd-table tbody tr.row-with-action .btn-update-icon {
+            background: var(--po-mid-blue);
+            color: #fff;
+        }
+
+        /* ===================================================================
+           UTILITY
+           =================================================================== */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+
+<!-- =====================================================================
+     SHOWCASE NAVIGATION
+     ====================================================================== -->
+<nav class="showcase-nav">
+    <div class="container-fluid d-flex align-items-center">
+        <span class="showcase-title me-4">
+            <i class="bi bi-palette2 me-1"></i> PO Timeline &amp; Batch Tracker — Design Directions
+        </span>
+        <ul class="nav">
+            <li class="nav-item"><a class="nav-link active" href="#direction-a">A: Clean Operational</a></li>
+            <li class="nav-item"><a class="nav-link" href="#direction-b">B: Data Command Center</a></li>
+            <li class="nav-item"><a class="nav-link" href="#direction-c">C: Excel Evolution</a></li>
+            <li class="nav-item"><a class="nav-link" href="#direction-d">D: Focused Workflow</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- =====================================================================
+     DIRECTION A — Clean Operational
+     ====================================================================== -->
+<section id="direction-a" class="direction-section">
+    <div class="container-fluid px-4">
+        <div class="direction-header">
+            <h2>Direction A: Clean Operational</h2>
+            <p>White background, minimal chrome, airy layout surrounding an ultra-dense data table &mdash; professional, calm, and focused.</p>
+        </div>
+        <div class="mockup-frame dir-a">
+            <!-- Navbar -->
+            <div class="da-navbar">
+                <div class="logo-area">
+                    <div class="logo-placeholder">P</div>
+                    <span class="app-name">PO Timeline &amp; Batch Tracker</span>
+                </div>
+                <div class="user-menu">
+                    <span><i class="bi bi-bell"></i></span>
+                    <span>Wei Chen</span>
+                    <div class="avatar">WC</div>
+                </div>
+            </div>
+            <!-- Filter bar -->
+            <div class="da-filter-bar">
+                <div class="filter-pills">
+                    <a class="filter-pill" href="#"><i class="bi bi-clock-history"></i> Late<span class="badge-count">23</span></a>
+                    <a class="filter-pill" href="#"><i class="bi bi-exclamation-triangle"></i> At Risk<span class="badge-count">41</span></a>
+                    <a class="filter-pill" href="#"><i class="bi bi-hourglass-split"></i> Stale<span class="badge-count">18</span></a>
+                    <a class="filter-pill" href="#"><i class="bi bi-arrow-repeat"></i> Updated<span class="badge-count">67</span></a>
+                    <a class="filter-pill active" href="#"><i class="bi bi-list-ul"></i> All<span class="badge-count">312</span></a>
+                </div>
+                <div class="supplier-dropdown">
+                    <select>
+                        <option>All Suppliers</option>
+                        <option>Shanghai Precision Parts</option>
+                        <option>Guangzhou MechTech</option>
+                        <option>Suzhou Alloy Works</option>
+                        <option>Dongguan FastBolt</option>
+                        <option>Ningbo SealPro</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Data table -->
+            <div class="da-table-wrap">
+                <table class="da-table">
+                    <thead>
+                        <tr>
+                            <th>PO #</th>
+                            <th>Supplier</th>
+                            <th>Item</th>
+                            <th class="text-right">Ordered</th>
+                            <th class="text-right">Remaining</th>
+                            <th>Promised</th>
+                            <th>Expected</th>
+                            <th class="text-right">Delay</th>
+                            <th>Status</th>
+                            <th>Source</th>
+                            <th>Last Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row-late">
+                            <td class="po-mono">PO-2026-0142</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">BRG-4420-SS</td>
+                            <td class="text-right">5,000</td>
+                            <td class="text-right">3,200</td>
+                            <td>2026-01-28</td>
+                            <td>2026-02-18</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">2 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0143</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">SHF-1100-CR</td>
+                            <td class="text-right">2,400</td>
+                            <td class="text-right">2,400</td>
+                            <td>2026-02-10</td>
+                            <td>2026-02-14</td>
+                            <td class="text-right delay-positive">+4</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness stale-warn">5 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr class="row-with-action">
+                            <td class="po-mono">PO-2026-0147</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">GR-7740-AL</td>
+                            <td class="text-right">12,000</td>
+                            <td class="text-right">8,500</td>
+                            <td>2026-02-05</td>
+                            <td>2026-02-24</td>
+                            <td class="text-right delay-positive">+19</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                            <td><span class="staleness stale-danger">12 days ago</span></td>
+                            <td><button class="btn-update">Update</button></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0151</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">FLG-2280-TI</td>
+                            <td class="text-right">800</td>
+                            <td class="text-right">800</td>
+                            <td>2026-03-01</td>
+                            <td>2026-03-01</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0153</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">HXB-0055-ZN</td>
+                            <td class="text-right">25,000</td>
+                            <td class="text-right">10,000</td>
+                            <td>2026-02-20</td>
+                            <td>2026-02-22</td>
+                            <td class="text-right delay-positive">+2</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0158</td>
+                            <td>Ningbo SealPro</td>
+                            <td class="po-mono">GSK-8810-NB</td>
+                            <td class="text-right">3,600</td>
+                            <td class="text-right">1,200</td>
+                            <td>2026-02-12</td>
+                            <td>2026-02-15</td>
+                            <td class="text-right delay-positive">+3</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">3 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0161</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">PIN-3300-SS</td>
+                            <td class="text-right">18,000</td>
+                            <td class="text-right">18,000</td>
+                            <td>2026-03-15</td>
+                            <td>2026-03-15</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0164</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">VLV-5500-BR</td>
+                            <td class="text-right">1,500</td>
+                            <td class="text-right">1,500</td>
+                            <td>2026-02-28</td>
+                            <td>2026-03-08</td>
+                            <td class="text-right delay-positive">+8</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                            <td><span class="staleness stale-warn">7 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0170</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">ROD-6650-CU</td>
+                            <td class="text-right">4,200</td>
+                            <td class="text-right">2,100</td>
+                            <td>2026-01-20</td>
+                            <td>2026-02-10</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0175</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">NUT-0012-A4</td>
+                            <td class="text-right">50,000</td>
+                            <td class="text-right">50,000</td>
+                            <td>2026-03-10</td>
+                            <td>2026-03-10</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">4 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0178</td>
+                            <td>Ningbo SealPro</td>
+                            <td class="po-mono">ORS-2240-VI</td>
+                            <td class="text-right">6,800</td>
+                            <td class="text-right">6,800</td>
+                            <td>2026-02-25</td>
+                            <td>2026-03-05</td>
+                            <td class="text-right delay-positive">+8</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness stale-warn">6 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0182</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">WSH-0088-SS</td>
+                            <td class="text-right">30,000</td>
+                            <td class="text-right">15,000</td>
+                            <td>2026-02-08</td>
+                            <td>2026-02-08</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0185</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">CYL-9920-ST</td>
+                            <td class="text-right">900</td>
+                            <td class="text-right">900</td>
+                            <td>2026-03-20</td>
+                            <td>2026-03-20</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">2 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0189</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">PIP-4410-SS</td>
+                            <td class="text-right">2,000</td>
+                            <td class="text-right">500</td>
+                            <td>2026-01-30</td>
+                            <td>2026-02-20</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="po-mono">PO-2026-0193</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">SCR-0320-A2</td>
+                            <td class="text-right">100,000</td>
+                            <td class="text-right">40,000</td>
+                            <td>2026-02-15</td>
+                            <td>2026-02-18</td>
+                            <td class="text-right delay-positive">+3</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">3 days ago</span></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =====================================================================
+     DIRECTION B — Data Command Center
+     ====================================================================== -->
+<section id="direction-b" class="direction-section">
+    <div class="container-fluid px-4">
+        <div class="direction-header">
+            <h2>Direction B: Data Command Center</h2>
+            <p>Dark blue navbar with professional monitoring-dashboard aesthetic &mdash; bold badges, strong hierarchy, prominent visual separation. Full-featured command center with inline editing, bulk operations, column filters, and slide-over detail panel.</p>
+        </div>
+        <div class="mockup-frame dir-b" style="position:relative;">
+            <!-- Navbar -->
+            <div class="db-navbar">
+                <div class="logo-area">
+                    <div class="logo-placeholder">P</div>
+                    <span class="app-name">PO Timeline &amp; Batch Tracker</span>
+                    <span class="role-badge"><i class="bi bi-person-badge"></i> Expeditor</span>
+                </div>
+                <div class="progress-area">
+                    <span>12/45 updated</span>
+                    <div class="mini-progress"><div class="mini-progress-fill" style="width:27%;"></div></div>
+                </div>
+                <div class="user-menu">
+                    <span><i class="bi bi-bell"></i></span>
+                    <span>Wei Chen</span>
+                    <div class="avatar">WC</div>
+                </div>
+            </div>
+            <!-- Filter bar (tabs) -->
+            <div class="db-filter-bar">
+                <div class="filter-tabs">
+                    <a class="filter-tab tab-late" href="#"><i class="bi bi-clock-history"></i> Late<span class="tab-count">23</span></a>
+                    <a class="filter-tab" href="#"><i class="bi bi-exclamation-triangle"></i> At Risk<span class="tab-count">41</span></a>
+                    <a class="filter-tab" href="#"><i class="bi bi-hourglass-split"></i> Stale<span class="tab-count">18</span></a>
+                    <a class="filter-tab" href="#"><i class="bi bi-arrow-repeat"></i> Updated<span class="tab-count">67</span></a>
+                    <a class="filter-tab active" href="#"><i class="bi bi-list-ul"></i> All<span class="tab-count">312</span></a>
+                </div>
+            </div>
+            <!-- Action Toolbar -->
+            <div class="db-action-toolbar">
+                <div class="select-info">
+                    <input type="checkbox" checked>
+                    <span>Select All</span>
+                    <span class="selected-count">3 selected</span>
+                </div>
+                <button class="tb-btn tb-btn-primary"><i class="bi bi-pencil-square"></i> Bulk Update</button>
+                <button class="tb-btn tb-btn-outline"><i class="bi bi-file-earmark-excel"></i> Generate Excel</button>
+                <button class="tb-btn tb-btn-toggle active"><i class="bi bi-pencil"></i> Inline Edit</button>
+                <div class="toolbar-right">
+                    <div class="db-col-chooser-wrap">
+                        <button class="tb-btn tb-btn-outline"><i class="bi bi-gear"></i> Columns</button>
+                        <!-- Column Chooser dropdown (shown open as demo) -->
+                        <div class="db-col-chooser">
+                            <div class="chooser-title">Visible Columns</div>
+                            <ul class="chooser-list">
+                                <li><input type="checkbox" checked> PO #</li>
+                                <li><input type="checkbox" checked> Supplier</li>
+                                <li><input type="checkbox" checked> Item</li>
+                                <li><input type="checkbox" checked> SKU</li>
+                                <li><input type="checkbox" checked> Final Customer</li>
+                                <li><input type="checkbox" checked> Ordered</li>
+                                <li><input type="checkbox" checked> Ready</li>
+                                <li><input type="checkbox" checked> Remaining</li>
+                                <li><input type="checkbox" checked> Promised</li>
+                                <li><input type="checkbox" checked> Expected</li>
+                                <li><input type="checkbox"> PO Date</li>
+                                <li><input type="checkbox" checked> Delay</li>
+                                <li><input type="checkbox" checked> Status</li>
+                                <li><input type="checkbox" checked> Source</li>
+                                <li><input type="checkbox" checked> Updated</li>
+                                <div class="chooser-divider"></div>
+                                <li class="custom-col"><input type="checkbox"> Custom: Prod. Start Date (date) <span class="custom-tag">custom</span></li>
+                                <li class="custom-col"><input type="checkbox" checked> Custom: Coating Type (text) <span class="custom-tag">custom</span></li>
+                                <li class="custom-col"><input type="checkbox"> Custom: Unit Weight (decimal) <span class="custom-tag">custom</span></li>
+                            </ul>
+                            <div class="chooser-note">Custom columns configured by admin</div>
+                        </div>
+                    </div>
+                    <span>Showing 312 PO lines</span>
+                    <button class="btn-refresh"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+            </div>
+            <!-- Bulk Update Floating Toolbar -->
+            <div class="db-bulk-toolbar">
+                <span class="bulk-count"><i class="bi bi-check2-square"></i> 3 rows selected</span>
+                <label>Date</label>
+                <input type="date" value="2026-02-20" style="width:130px;">
+                <label>Ready Qty</label>
+                <input type="text" placeholder="Qty" style="width:70px;">
+                <label>Reason</label>
+                <select style="width:130px;">
+                    <option>Select reason...</option>
+                    <option>Material shortage</option>
+                    <option>Production delay</option>
+                    <option>Shipping delay</option>
+                    <option>Quality issue</option>
+                </select>
+                <label>Source</label>
+                <div class="bulk-radio-group">
+                    <label><input type="radio" name="bulk-source" checked> Confirmed</label>
+                    <label><input type="radio" name="bulk-source"> Estimate</label>
+                    <label><input type="radio" name="bulk-source"> No Response</label>
+                </div>
+                <button class="btn-bulk-apply">Apply to Selected</button>
+                <button class="btn-bulk-cancel">Cancel</button>
+            </div>
+            <!-- Data table with slide-over overlay container -->
+            <div class="db-slideover-overlay">
+                <div class="db-table-wrap">
+                    <table class="db-table">
+                        <thead>
+                            <!-- Column Header Row -->
+                            <tr class="header-row">
+                                <th class="col-check"><input type="checkbox" checked></th>
+                                <th>PO # <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Supplier <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Item <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>SKU <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Final Customer <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th class="text-right">Ordered <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th class="text-right">Ready <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th class="text-right">Remaining <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Promised <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Expected <span class="sort-icon active"><i class="bi bi-chevron-down"></i></span></th>
+                                <th>PO Date <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th class="text-right">Delay <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Status <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Source <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Updated <span class="sort-icon"><i class="bi bi-chevron-expand"></i></span></th>
+                                <th>Action</th>
+                            </tr>
+                            <!-- Column Filter Row -->
+                            <tr class="filter-row">
+                                <th class="col-check"></th>
+                                <th><input type="text" placeholder="PO #..."></th>
+                                <th><select><option>All Suppliers</option><option>Shanghai Precision Parts</option><option>Guangzhou MechTech</option><option>Suzhou Alloy Works</option><option>Dongguan FastBolt</option><option>Ningbo SealPro</option></select></th>
+                                <th><select><option>All Items</option><option>Bearings</option><option>Shafts</option><option>Gears</option><option>Flanges</option><option>Hex Bolts</option><option>Gaskets</option><option>Pins</option><option>Valves</option><option>Rods</option><option>Nuts</option><option>O-Rings</option><option>Washers</option><option>Cylinders</option><option>Pipes</option><option>Screws</option></select></th>
+                                <th><input type="text" placeholder="SKU..."></th>
+                                <th><select><option>All Customers</option><option>Bosch AG</option><option>Siemens Energy</option><option>ABB Ltd</option><option>Schneider Electric</option><option>SKF Group</option></select></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th><input type="date" style="width:100%;"></th>
+                                <th><input type="date" style="width:100%;"></th>
+                                <th><input type="date" style="width:100%;"></th>
+                                <th><select><option>All</option><option>Late</option><option>At Risk</option><option>On Track</option></select></th>
+                                <th><select><option>All</option><option>Late</option><option>At Risk</option><option>On Track</option></select></th>
+                                <th><select><option>All</option><option>Confirmed</option><option>Estimate</option><option>No Response</option></select></th>
+                                <th><select><option>All</option><option>Today</option><option>3 days</option><option>7 days</option></select></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Row 1: LATE + SELECTED — some delivered + some ready -->
+                            <tr class="row-late row-selected">
+                                <td class="col-check"><input type="checkbox" checked></td>
+                                <td class="po-mono">PO-2026-0142</td>
+                                <td>Shanghai Precision Parts</td>
+                                <td>Bearings</td>
+                                <td class="po-mono">BRG-4420-SS</td>
+                                <td>Bosch AG</td>
+                                <td class="text-right">5,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">3,600/5,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:36%;"></div><div class="seg-ready" style="width:36%;"></div><div class="seg-remaining" style="width:28%;"></div></div></div></td>
+                                <td class="text-right">1,400</td>
+                                <td>2026-01-28</td>
+                                <td>2026-02-18</td>
+                                <td>2025-11-15</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">2 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 2: AT RISK + SELECTED — nothing ready -->
+                            <tr class="row-at-risk row-selected">
+                                <td class="col-check"><input type="checkbox" checked></td>
+                                <td class="po-mono">PO-2026-0143</td>
+                                <td>Shanghai Precision Parts</td>
+                                <td>Shafts</td>
+                                <td class="po-mono">SHF-1100-CR</td>
+                                <td>Siemens Energy</td>
+                                <td class="text-right">2,400</td>
+                                <td><div class="ready-cell"><span class="ready-text">0/2,400</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:0%;"></div><div class="seg-remaining" style="width:100%;"></div></div></div></td>
+                                <td class="text-right">2,400</td>
+                                <td>2026-02-10</td>
+                                <td>2026-02-14</td>
+                                <td>2025-12-01</td>
+                                <td class="text-right delay-positive">+4</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness stale-warn">5 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 3: LATE + INLINE EDIT MODE — some delivered + some ready -->
+                            <tr class="row-late row-inline-edit">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0147</td>
+                                <td>Guangzhou MechTech</td>
+                                <td>Gears</td>
+                                <td class="po-mono">GR-7740-AL</td>
+                                <td>ABB Ltd</td>
+                                <td class="text-right">12,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">5,500/12,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:17%;"></div><div class="seg-ready" style="width:29%;"></div><div class="seg-remaining" style="width:54%;"></div></div></div></td>
+                                <td class="text-right">6,500</td>
+                                <td>2026-02-05</td>
+                                <td><input type="date" value="2026-02-24" style="width:120px;"></td>
+                                <td>2025-11-20</td>
+                                <td class="text-right delay-positive">+19</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td>
+                                    <select style="width:100px;"><option>Confirmed</option><option selected>No Response</option><option>Estimate</option></select>
+                                </td>
+                                <td><span class="staleness stale-danger">12 days ago</span></td>
+                                <td>
+                                    <button class="btn-save"><i class="bi bi-check-lg"></i> Save</button>
+                                    <button class="btn-cancel-edit"><i class="bi bi-x-lg"></i></button>
+                                </td>
+                            </tr>
+                            <!-- Row 4: ON TRACK — only ready, no deliveries -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0151</td>
+                                <td>Suzhou Alloy Works</td>
+                                <td>Flanges</td>
+                                <td class="po-mono">FLG-2280-TI</td>
+                                <td>Schneider Electric</td>
+                                <td class="text-right">800</td>
+                                <td><div class="ready-cell"><span class="ready-text">800/800</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:100%;"></div><div class="seg-remaining" style="width:0%;"></div></div></div></td>
+                                <td class="text-right">0</td>
+                                <td>2026-03-01</td>
+                                <td>2026-03-01</td>
+                                <td>2025-12-10</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 5: ON TRACK + SELECTED — some delivered + some ready -->
+                            <tr class="row-selected">
+                                <td class="col-check"><input type="checkbox" checked></td>
+                                <td class="po-mono">PO-2026-0153</td>
+                                <td>Dongguan FastBolt</td>
+                                <td>Hex Bolts</td>
+                                <td class="po-mono">HXB-0055-ZN</td>
+                                <td>SKF Group</td>
+                                <td class="text-right">25,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">15,000/25,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:28%;"></div><div class="seg-ready" style="width:32%;"></div><div class="seg-remaining" style="width:40%;"></div></div></div></td>
+                                <td class="text-right">10,000</td>
+                                <td>2026-02-20</td>
+                                <td>2026-02-22</td>
+                                <td>2025-11-28</td>
+                                <td class="text-right delay-positive">+2</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">Today</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 6: AT RISK — only ready, no deliveries -->
+                            <tr class="row-at-risk">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0158</td>
+                                <td>Ningbo SealPro</td>
+                                <td>Gaskets</td>
+                                <td class="po-mono">GSK-8810-NB</td>
+                                <td>Bosch AG</td>
+                                <td class="text-right">3,600</td>
+                                <td><div class="ready-cell"><span class="ready-text">2,400/3,600</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:67%;"></div><div class="seg-remaining" style="width:33%;"></div></div></div></td>
+                                <td class="text-right">1,200</td>
+                                <td>2026-02-12</td>
+                                <td>2026-02-15</td>
+                                <td>2025-12-05</td>
+                                <td class="text-right delay-positive">+3</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness">3 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 7: ON TRACK — nothing ready -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0161</td>
+                                <td>Shanghai Precision Parts</td>
+                                <td>Pins</td>
+                                <td class="po-mono">PIN-3300-SS</td>
+                                <td>Siemens Energy</td>
+                                <td class="text-right">18,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">0/18,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:0%;"></div><div class="seg-remaining" style="width:100%;"></div></div></div></td>
+                                <td class="text-right">18,000</td>
+                                <td>2026-03-15</td>
+                                <td>2026-03-15</td>
+                                <td>2025-12-18</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">Today</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 8: AT RISK — nothing ready -->
+                            <tr class="row-at-risk">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0164</td>
+                                <td>Guangzhou MechTech</td>
+                                <td>Valves</td>
+                                <td class="po-mono">VLV-5500-BR</td>
+                                <td>ABB Ltd</td>
+                                <td class="text-right">1,500</td>
+                                <td><div class="ready-cell"><span class="ready-text">0/1,500</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:0%;"></div><div class="seg-remaining" style="width:100%;"></div></div></div></td>
+                                <td class="text-right">1,500</td>
+                                <td>2026-02-28</td>
+                                <td>2026-03-08</td>
+                                <td>2025-11-25</td>
+                                <td class="text-right delay-positive">+8</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                                <td><span class="staleness stale-warn">7 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 9: LATE — some delivered + some ready -->
+                            <tr class="row-late">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0170</td>
+                                <td>Suzhou Alloy Works</td>
+                                <td>Rods</td>
+                                <td class="po-mono">ROD-6650-CU</td>
+                                <td>Schneider Electric</td>
+                                <td class="text-right">4,200</td>
+                                <td><div class="ready-cell"><span class="ready-text">3,200/4,200</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:26%;"></div><div class="seg-ready" style="width:50%;"></div><div class="seg-remaining" style="width:24%;"></div></div></div></td>
+                                <td class="text-right">1,000</td>
+                                <td>2026-01-20</td>
+                                <td>2026-02-10</td>
+                                <td>2025-11-10</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 10: ON TRACK — fully delivered -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0175</td>
+                                <td>Dongguan FastBolt</td>
+                                <td>Nuts</td>
+                                <td class="po-mono">NUT-0012-A4</td>
+                                <td>SKF Group</td>
+                                <td class="text-right">18,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">18,000/18,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:100%;"></div><div class="seg-ready" style="width:0%;"></div><div class="seg-remaining" style="width:0%;"></div></div></div></td>
+                                <td class="text-right">0</td>
+                                <td>2026-03-10</td>
+                                <td>2026-03-10</td>
+                                <td>2025-12-15</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness">4 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 11: AT RISK — only ready, no deliveries -->
+                            <tr class="row-at-risk">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0178</td>
+                                <td>Ningbo SealPro</td>
+                                <td>O-Rings</td>
+                                <td class="po-mono">ORS-2240-VI</td>
+                                <td>Bosch AG</td>
+                                <td class="text-right">6,800</td>
+                                <td><div class="ready-cell"><span class="ready-text">1,200/6,800</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:0%;"></div><div class="seg-ready" style="width:18%;"></div><div class="seg-remaining" style="width:82%;"></div></div></div></td>
+                                <td class="text-right">5,600</td>
+                                <td>2026-02-25</td>
+                                <td>2026-03-05</td>
+                                <td>2025-12-08</td>
+                                <td class="text-right delay-positive">+8</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness stale-warn">6 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 12: ON TRACK — some delivered + some ready -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0182</td>
+                                <td>Shanghai Precision Parts</td>
+                                <td>Washers</td>
+                                <td class="po-mono">WSH-0088-SS</td>
+                                <td>Siemens Energy</td>
+                                <td class="text-right">30,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">20,000/30,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:33%;"></div><div class="seg-ready" style="width:33%;"></div><div class="seg-remaining" style="width:34%;"></div></div></div></td>
+                                <td class="text-right">10,000</td>
+                                <td>2026-02-08</td>
+                                <td>2026-02-08</td>
+                                <td>2025-11-05</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">Today</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 13: ON TRACK — fully delivered -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0185</td>
+                                <td>Guangzhou MechTech</td>
+                                <td>Cylinders</td>
+                                <td class="po-mono">CYL-9920-ST</td>
+                                <td>ABB Ltd</td>
+                                <td class="text-right">900</td>
+                                <td><div class="ready-cell"><span class="ready-text">900/900</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:100%;"></div><div class="seg-ready" style="width:0%;"></div><div class="seg-remaining" style="width:0%;"></div></div></div></td>
+                                <td class="text-right">0</td>
+                                <td>2026-03-20</td>
+                                <td>2026-03-20</td>
+                                <td>2025-12-20</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                                <td><span class="staleness">2 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 14: LATE — some delivered + some ready -->
+                            <tr class="row-late">
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0189</td>
+                                <td>Suzhou Alloy Works</td>
+                                <td>Pipes</td>
+                                <td class="po-mono">PIP-4410-SS</td>
+                                <td>Schneider Electric</td>
+                                <td class="text-right">2,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">1,500/2,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:50%;"></div><div class="seg-ready" style="width:25%;"></div><div class="seg-remaining" style="width:25%;"></div></div></div></td>
+                                <td class="text-right">500</td>
+                                <td>2026-01-30</td>
+                                <td>2026-02-20</td>
+                                <td>2025-11-12</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                            <!-- Row 15: ON TRACK — some delivered + some ready -->
+                            <tr>
+                                <td class="col-check"><input type="checkbox"></td>
+                                <td class="po-mono">PO-2026-0193</td>
+                                <td>Dongguan FastBolt</td>
+                                <td>Screws</td>
+                                <td class="po-mono">SCR-0320-A2</td>
+                                <td>SKF Group</td>
+                                <td class="text-right">100,000</td>
+                                <td><div class="ready-cell"><span class="ready-text">60,000/100,000</span><div class="ready-bar-segments"><div class="seg-delivered" style="width:25%;"></div><div class="seg-ready" style="width:35%;"></div><div class="seg-remaining" style="width:40%;"></div></div></div></td>
+                                <td class="text-right">40,000</td>
+                                <td>2026-02-15</td>
+                                <td>2026-02-18</td>
+                                <td>2025-12-02</td>
+                                <td class="text-right delay-positive">+3</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                                <td><span class="staleness">3 days ago</span></td>
+                                <td><button class="btn-update-outline">Update</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Slide-over Detail Panel (RIGHT SIDE overlay) -->
+                <div class="db-slideover">
+                    <div class="panel-header">
+                        <div class="panel-title">PO-2026-0142 | Shanghai Precision Parts</div>
+                        <div class="panel-subtitle"><span style="color:rgba(255,255,255,.9);">Bearings</span> &nbsp;&middot;&nbsp; <span class="po-mono" style="color:rgba(255,255,255,.9);">BRG-4420-SS</span> &nbsp;&middot;&nbsp; Bosch AG &nbsp;&middot;&nbsp; Ordered: 5,000</div>
+                        <button class="btn-close-panel"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Quantity Progress Section -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Quantity Progress</div>
+                            <div class="qty-progress">
+                                <div class="qty-bar-track">
+                                    <div class="qty-bar-segment seg-delivered-new" style="width:36%;">1,800</div>
+                                    <div class="qty-bar-segment seg-ready-new" style="width:36%;">1,800</div>
+                                    <div class="qty-bar-segment seg-remaining-new" style="width:28%;">1,400</div>
+                                </div>
+                                <div class="qty-bar-legend">
+                                    <span><span class="legend-dot" style="background:#16a34a;"></span> Delivered (Dispatched): 1,800 pcs</span>
+                                    <span><span class="legend-dot" style="background:#2563eb;"></span> Ready for Dispatch: 1,800 pcs</span>
+                                    <span><span class="legend-dot" style="background:#d1d5db;"></span> Remaining: 1,400 pcs</span>
+                                </div>
+                                <div class="qty-progress-note">Note: Delivered = Dispatched from supplier perspective</div>
+                            </div>
+                        </div>
+                        <!-- Audit Timeline -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Update History</div>
+                            <div class="audit-timeline">
+                                <!-- Entry 1 -->
+                                <div class="audit-entry">
+                                    <div class="audit-dot-col"><div class="audit-dot"></div><div class="audit-line"></div></div>
+                                    <div class="audit-content">
+                                        <div class="audit-meta">
+                                            <span>2026-02-10 14:32</span>
+                                            <span class="audit-user">Wei Chen</span>
+                                            <span class="badge-source badge-confirmed" style="font-size:9px;padding:1px 5px;"><i class="bi bi-circle-fill"></i> Confirmed</span>
+                                        </div>
+                                        <div class="audit-change">
+                                            <span class="change-label">Expected date:</span>
+                                            <span class="change-old">2026-02-10</span> &rarr;
+                                            <span class="change-new">2026-02-18</span>
+                                        </div>
+                                        <div class="audit-change">
+                                            <span class="change-label">Ready:</span>
+                                            <span class="change-old">0</span> &rarr;
+                                            <span class="change-new">1,800</span>
+                                        </div>
+                                        <div class="audit-reason">"Supplier delayed due to material shortage"</div>
+                                    </div>
+                                </div>
+                                <!-- Entry 2 -->
+                                <div class="audit-entry">
+                                    <div class="audit-dot-col"><div class="audit-dot"></div><div class="audit-line"></div></div>
+                                    <div class="audit-content">
+                                        <div class="audit-meta">
+                                            <span>2026-02-03 09:15</span>
+                                            <span class="audit-user">Li Zhang</span>
+                                            <span class="badge-source badge-estimate" style="font-size:9px;padding:1px 5px;"><i class="bi bi-circle"></i> Estimate</span>
+                                        </div>
+                                        <div class="audit-change">
+                                            <span class="change-label">Expected date:</span>
+                                            <span class="change-old">2026-01-28</span> &rarr;
+                                            <span class="change-new">2026-02-10</span>
+                                        </div>
+                                        <div class="audit-reason">"Partial shipment confirmed, remainder delayed"</div>
+                                    </div>
+                                </div>
+                                <!-- Entry 3 -->
+                                <div class="audit-entry">
+                                    <div class="audit-dot-col"><div class="audit-dot"></div><div class="audit-line"></div></div>
+                                    <div class="audit-content">
+                                        <div class="audit-meta">
+                                            <span>2026-01-22 16:48</span>
+                                            <span class="audit-user">Wei Chen</span>
+                                            <span class="badge-source badge-no-response" style="font-size:9px;padding:1px 5px;"><i class="bi bi-x-circle"></i> No Response</span>
+                                        </div>
+                                        <div class="audit-change">
+                                            <span class="change-label">Status:</span>
+                                            <span class="change-old">On Track</span> &rarr;
+                                            <span class="change-new">Late</span>
+                                        </div>
+                                        <div class="audit-reason">"No response from supplier after 3 follow-ups"</div>
+                                    </div>
+                                </div>
+                                <!-- Entry 4 (initial) -->
+                                <div class="audit-entry">
+                                    <div class="audit-dot-col"><div class="audit-dot" style="background:var(--po-grey-400);"></div></div>
+                                    <div class="audit-content">
+                                        <div class="audit-meta">
+                                            <span>2026-01-10 08:00</span>
+                                            <span class="audit-user">System</span>
+                                        </div>
+                                        <div class="audit-change">
+                                            <span class="change-label">PO created.</span>
+                                            Promised date: <span class="change-new">2026-01-28</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Batch Table -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Batches / Shipments</div>
+                            <table class="batch-table">
+                                <thead>
+                                    <tr>
+                                        <th>Batch</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                        <th>Expected</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#1</td>
+                                        <td>1,800</td>
+                                        <td><span class="batch-badge batch-delivered">Delivered</span></td>
+                                        <td>2026-01-28</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#2</td>
+                                        <td>3,200</td>
+                                        <td><span class="batch-badge batch-planned">Planned</span></td>
+                                        <td>2026-03-05</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =====================================================================
+     DIRECTION C — Excel Evolution
+     ====================================================================== -->
+<section id="direction-c" class="direction-section">
+    <div class="container-fluid px-4">
+        <div class="direction-header">
+            <h2>Direction C: Excel Evolution</h2>
+            <p>Maximum density with visible grid lines, toolbar-style chrome, and spreadsheet-familiar column headers &mdash; the most natural path for Excel-transitioning users.</p>
+        </div>
+        <div class="mockup-frame dir-c">
+            <!-- Toolbar (Excel-like) -->
+            <div class="dc-toolbar">
+                <div class="logo-placeholder">P</div>
+                <span class="app-name">PO Tracker</span>
+                <div class="tb-sep"></div>
+                <a class="tb-btn" href="#"><i class="bi bi-clock-history"></i> Late (23)</a>
+                <a class="tb-btn" href="#"><i class="bi bi-exclamation-triangle"></i> At Risk (41)</a>
+                <a class="tb-btn" href="#"><i class="bi bi-hourglass-split"></i> Stale (18)</a>
+                <a class="tb-btn" href="#"><i class="bi bi-arrow-repeat"></i> Updated (67)</a>
+                <a class="tb-btn active" href="#"><i class="bi bi-list-ul"></i> All (312)</a>
+                <div class="tb-sep"></div>
+                <a class="tb-btn" href="#"><i class="bi bi-file-earmark-excel"></i> Export</a>
+                <div class="user-area">
+                    <i class="bi bi-person-circle"></i> Wei Chen
+                </div>
+            </div>
+            <!-- Filter row -->
+            <div class="dc-filter-row">
+                <label>Supplier:</label>
+                <select>
+                    <option>All Suppliers</option>
+                    <option>Shanghai Precision Parts</option>
+                    <option>Guangzhou MechTech</option>
+                    <option>Suzhou Alloy Works</option>
+                    <option>Dongguan FastBolt</option>
+                    <option>Ningbo SealPro</option>
+                </select>
+                <div class="tb-sep" style="height:14px;margin:0 6px;"></div>
+                <label>Search:</label>
+                <input type="text" placeholder="PO# or item..." style="font-size:11px;padding:1px 6px;border:1px solid #d1d5db;border-radius:2px;width:160px;">
+                <span style="margin-left:auto;font-size:11px;color:#9ca3af;">Showing 312 of 312 lines</span>
+            </div>
+            <!-- Data table (spreadsheet-style) -->
+            <div class="dc-table-wrap">
+                <table class="dc-table">
+                    <thead>
+                        <tr>
+                            <th style="width:30px;text-align:center;">#</th>
+                            <th>PO #</th>
+                            <th>Supplier</th>
+                            <th>Item</th>
+                            <th class="text-right">Ordered</th>
+                            <th class="text-right">Remaining</th>
+                            <th>Promised</th>
+                            <th>Expected</th>
+                            <th class="text-right">Delay</th>
+                            <th>Status</th>
+                            <th>Source</th>
+                            <th>Last Updated</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">1</td>
+                            <td class="po-mono">PO-2026-0142</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">BRG-4420-SS</td>
+                            <td class="text-right">5,000</td>
+                            <td class="text-right">3,200</td>
+                            <td>2026-01-28</td>
+                            <td>2026-02-18</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">2 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">2</td>
+                            <td class="po-mono">PO-2026-0143</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">SHF-1100-CR</td>
+                            <td class="text-right">2,400</td>
+                            <td class="text-right">2,400</td>
+                            <td>2026-02-10</td>
+                            <td>2026-02-14</td>
+                            <td class="text-right delay-positive">+4</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness stale-warn">5 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr class="row-with-action">
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">3</td>
+                            <td class="po-mono">PO-2026-0147</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">GR-7740-AL</td>
+                            <td class="text-right">12,000</td>
+                            <td class="text-right">8,500</td>
+                            <td>2026-02-05</td>
+                            <td>2026-02-24</td>
+                            <td class="text-right delay-positive">+19</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                            <td><span class="staleness stale-danger">12 days ago</span></td>
+                            <td><button class="btn-update">Update</button></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">4</td>
+                            <td class="po-mono">PO-2026-0151</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">FLG-2280-TI</td>
+                            <td class="text-right">800</td>
+                            <td class="text-right">800</td>
+                            <td>2026-03-01</td>
+                            <td>2026-03-01</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">5</td>
+                            <td class="po-mono">PO-2026-0153</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">HXB-0055-ZN</td>
+                            <td class="text-right">25,000</td>
+                            <td class="text-right">10,000</td>
+                            <td>2026-02-20</td>
+                            <td>2026-02-22</td>
+                            <td class="text-right delay-positive">+2</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">6</td>
+                            <td class="po-mono">PO-2026-0158</td>
+                            <td>Ningbo SealPro</td>
+                            <td class="po-mono">GSK-8810-NB</td>
+                            <td class="text-right">3,600</td>
+                            <td class="text-right">1,200</td>
+                            <td>2026-02-12</td>
+                            <td>2026-02-15</td>
+                            <td class="text-right delay-positive">+3</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">3 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">7</td>
+                            <td class="po-mono">PO-2026-0161</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">PIN-3300-SS</td>
+                            <td class="text-right">18,000</td>
+                            <td class="text-right">18,000</td>
+                            <td>2026-03-15</td>
+                            <td>2026-03-15</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">8</td>
+                            <td class="po-mono">PO-2026-0164</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">VLV-5500-BR</td>
+                            <td class="text-right">1,500</td>
+                            <td class="text-right">1,500</td>
+                            <td>2026-02-28</td>
+                            <td>2026-03-08</td>
+                            <td class="text-right delay-positive">+8</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                            <td><span class="staleness stale-warn">7 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">9</td>
+                            <td class="po-mono">PO-2026-0170</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">ROD-6650-CU</td>
+                            <td class="text-right">4,200</td>
+                            <td class="text-right">2,100</td>
+                            <td>2026-01-20</td>
+                            <td>2026-02-10</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">10</td>
+                            <td class="po-mono">PO-2026-0175</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">NUT-0012-A4</td>
+                            <td class="text-right">50,000</td>
+                            <td class="text-right">50,000</td>
+                            <td>2026-03-10</td>
+                            <td>2026-03-10</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">4 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">11</td>
+                            <td class="po-mono">PO-2026-0178</td>
+                            <td>Ningbo SealPro</td>
+                            <td class="po-mono">ORS-2240-VI</td>
+                            <td class="text-right">6,800</td>
+                            <td class="text-right">6,800</td>
+                            <td>2026-02-25</td>
+                            <td>2026-03-05</td>
+                            <td class="text-right delay-positive">+8</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness stale-warn">6 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">12</td>
+                            <td class="po-mono">PO-2026-0182</td>
+                            <td>Shanghai Precision Parts</td>
+                            <td class="po-mono">WSH-0088-SS</td>
+                            <td class="text-right">30,000</td>
+                            <td class="text-right">15,000</td>
+                            <td>2026-02-08</td>
+                            <td>2026-02-08</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">Today</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">13</td>
+                            <td class="po-mono">PO-2026-0185</td>
+                            <td>Guangzhou MechTech</td>
+                            <td class="po-mono">CYL-9920-ST</td>
+                            <td class="text-right">900</td>
+                            <td class="text-right">900</td>
+                            <td>2026-03-20</td>
+                            <td>2026-03-20</td>
+                            <td class="text-right delay-zero">0</td>
+                            <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">2 days ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">14</td>
+                            <td class="po-mono">PO-2026-0189</td>
+                            <td>Suzhou Alloy Works</td>
+                            <td class="po-mono">PIP-4410-SS</td>
+                            <td class="text-right">2,000</td>
+                            <td class="text-right">500</td>
+                            <td>2026-01-30</td>
+                            <td>2026-02-20</td>
+                            <td class="text-right delay-positive">+21</td>
+                            <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                            <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                            <td><span class="staleness">1 day ago</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" style="color:#9ca3af;font-size:11px;">15</td>
+                            <td class="po-mono">PO-2026-0193</td>
+                            <td>Dongguan FastBolt</td>
+                            <td class="po-mono">SCR-0320-A2</td>
+                            <td class="text-right">100,000</td>
+                            <td class="text-right">40,000</td>
+                            <td>2026-02-15</td>
+                            <td>2026-02-18</td>
+                            <td class="text-right delay-positive">+3</td>
+                            <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                            <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                            <td><span class="staleness">3 days ago</span></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =====================================================================
+     DIRECTION D — Focused Workflow
+     ====================================================================== -->
+<section id="direction-d" class="direction-section">
+    <div class="container-fluid px-4">
+        <div class="direction-header">
+            <h2>Direction D: Focused Workflow</h2>
+            <p>Left sidebar for filter presets, supplier grouping with collapsible sections, prominent progress indicator, and icon-button update actions &mdash; optimized for the expeditor rapid-fire update workflow.</p>
+        </div>
+        <div class="mockup-frame dir-d">
+            <!-- Navbar -->
+            <div class="dd-navbar">
+                <div class="logo-area">
+                    <div class="logo-placeholder">P</div>
+                    <span class="app-name">PO Timeline &amp; Batch Tracker</span>
+                </div>
+                <div class="progress-indicator">
+                    <span style="font-weight:600;">12 / 45</span>
+                    <span style="opacity:.7;">updated</span>
+                    <div class="progress">
+                        <div class="progress-bar" style="width:27%;"></div>
+                    </div>
+                </div>
+                <div class="user-menu">
+                    <span><i class="bi bi-bell"></i></span>
+                    <span>Wei Chen</span>
+                    <div class="avatar">WC</div>
+                </div>
+            </div>
+            <!-- Layout: sidebar + main -->
+            <div class="dd-layout">
+                <!-- Sidebar -->
+                <div class="dd-sidebar">
+                    <div class="sb-section-label">Views</div>
+                    <a class="sb-item has-alert" href="#">
+                        <i class="bi bi-clock-history"></i> Late
+                        <span class="sb-count">23</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-exclamation-triangle"></i> At Risk
+                        <span class="sb-count">41</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-hourglass-split"></i> Stale
+                        <span class="sb-count">18</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-arrow-repeat"></i> Updated
+                        <span class="sb-count">67</span>
+                    </a>
+                    <a class="sb-item active" href="#">
+                        <i class="bi bi-list-ul"></i> All POs
+                        <span class="sb-count">312</span>
+                    </a>
+                    <div class="sb-divider"></div>
+                    <div class="sb-section-label">Suppliers</div>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-building"></i> Shanghai Precision
+                        <span class="sb-count">48</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-building"></i> Guangzhou MechTech
+                        <span class="sb-count">35</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-building"></i> Suzhou Alloy
+                        <span class="sb-count">29</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-building"></i> Dongguan FastBolt
+                        <span class="sb-count">22</span>
+                    </a>
+                    <a class="sb-item" href="#">
+                        <i class="bi bi-building"></i> Ningbo SealPro
+                        <span class="sb-count">18</span>
+                    </a>
+                </div>
+                <!-- Main content -->
+                <div class="dd-main">
+                    <!-- Supplier Group 1 -->
+                    <div class="dd-group-header">
+                        <i class="bi bi-chevron-down" style="font-size:12px;color:#9ca3af;"></i>
+                        <span class="gh-supplier">Shanghai Precision Parts</span>
+                        <span class="gh-count">48 lines</span>
+                        <div class="gh-progress">
+                            3 / 8 updated
+                            <div class="progress">
+                                <div class="progress-bar" style="width:38%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="dd-table">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;"></th>
+                                <th>PO #</th>
+                                <th>Item</th>
+                                <th class="text-right">Ordered</th>
+                                <th class="text-right">Remaining</th>
+                                <th>Promised</th>
+                                <th>Expected</th>
+                                <th class="text-right">Delay</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0142</td>
+                                <td class="po-mono">BRG-4420-SS</td>
+                                <td class="text-right">5,000</td>
+                                <td class="text-right">3,200</td>
+                                <td>2026-01-28</td>
+                                <td>2026-02-18</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">2 days ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0143</td>
+                                <td class="po-mono">SHF-1100-CR</td>
+                                <td class="text-right">2,400</td>
+                                <td class="text-right">2,400</td>
+                                <td>2026-02-10</td>
+                                <td>2026-02-14</td>
+                                <td class="text-right delay-positive">+4</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-estimate"><i class="bi bi-circle"></i> Estimate</span></td>
+                                <td><span class="staleness stale-warn">5 days ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0161</td>
+                                <td class="po-mono">PIN-3300-SS</td>
+                                <td class="text-right">18,000</td>
+                                <td class="text-right">18,000</td>
+                                <td>2026-03-15</td>
+                                <td>2026-03-15</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">Today</span></td>
+                            </tr>
+                            <tr class="row-with-action">
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0182</td>
+                                <td class="po-mono">WSH-0088-SS</td>
+                                <td class="text-right">30,000</td>
+                                <td class="text-right">15,000</td>
+                                <td>2026-02-08</td>
+                                <td>2026-02-08</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">Today</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- Supplier Group 2 -->
+                    <div class="dd-group-header">
+                        <i class="bi bi-chevron-down" style="font-size:12px;color:#9ca3af;"></i>
+                        <span class="gh-supplier">Guangzhou MechTech</span>
+                        <span class="gh-count">35 lines</span>
+                        <div class="gh-progress">
+                            1 / 6 updated
+                            <div class="progress">
+                                <div class="progress-bar" style="width:17%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="dd-table">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;"></th>
+                                <th>PO #</th>
+                                <th>Item</th>
+                                <th class="text-right">Ordered</th>
+                                <th class="text-right">Remaining</th>
+                                <th>Promised</th>
+                                <th>Expected</th>
+                                <th class="text-right">Delay</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0147</td>
+                                <td class="po-mono">GR-7740-AL</td>
+                                <td class="text-right">12,000</td>
+                                <td class="text-right">8,500</td>
+                                <td>2026-02-05</td>
+                                <td>2026-02-24</td>
+                                <td class="text-right delay-positive">+19</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                                <td><span class="staleness stale-danger">12 days ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0164</td>
+                                <td class="po-mono">VLV-5500-BR</td>
+                                <td class="text-right">1,500</td>
+                                <td class="text-right">1,500</td>
+                                <td>2026-02-28</td>
+                                <td>2026-03-08</td>
+                                <td class="text-right delay-positive">+8</td>
+                                <td><span class="badge-status badge-at-risk"><i class="bi bi-exclamation-triangle"></i> At Risk</span></td>
+                                <td><span class="badge-source badge-no-response"><i class="bi bi-x-circle"></i> No Response</span></td>
+                                <td><span class="staleness stale-warn">7 days ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0185</td>
+                                <td class="po-mono">CYL-9920-ST</td>
+                                <td class="text-right">900</td>
+                                <td class="text-right">900</td>
+                                <td>2026-03-20</td>
+                                <td>2026-03-20</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">2 days ago</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- Supplier Group 3 -->
+                    <div class="dd-group-header">
+                        <i class="bi bi-chevron-down" style="font-size:12px;color:#9ca3af;"></i>
+                        <span class="gh-supplier">Suzhou Alloy Works</span>
+                        <span class="gh-count">29 lines</span>
+                        <div class="gh-progress">
+                            4 / 5 updated
+                            <div class="progress">
+                                <div class="progress-bar" style="width:80%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="dd-table">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;"></th>
+                                <th>PO #</th>
+                                <th>Item</th>
+                                <th class="text-right">Ordered</th>
+                                <th class="text-right">Remaining</th>
+                                <th>Promised</th>
+                                <th>Expected</th>
+                                <th class="text-right">Delay</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0151</td>
+                                <td class="po-mono">FLG-2280-TI</td>
+                                <td class="text-right">800</td>
+                                <td class="text-right">800</td>
+                                <td>2026-03-01</td>
+                                <td>2026-03-01</td>
+                                <td class="text-right delay-zero">0</td>
+                                <td><span class="badge-status badge-on-track"><i class="bi bi-check-circle"></i> On Track</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0170</td>
+                                <td class="po-mono">ROD-6650-CU</td>
+                                <td class="text-right">4,200</td>
+                                <td class="text-right">2,100</td>
+                                <td>2026-01-20</td>
+                                <td>2026-02-10</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="btn-update-icon"><i class="bi bi-pencil-square"></i></span></td>
+                                <td class="po-mono">PO-2026-0189</td>
+                                <td class="po-mono">PIP-4410-SS</td>
+                                <td class="text-right">2,000</td>
+                                <td class="text-right">500</td>
+                                <td>2026-01-30</td>
+                                <td>2026-02-20</td>
+                                <td class="text-right delay-positive">+21</td>
+                                <td><span class="badge-status badge-late"><i class="bi bi-clock"></i> Late</span></td>
+                                <td><span class="badge-source badge-confirmed"><i class="bi bi-circle-fill"></i> Confirmed</span></td>
+                                <td><span class="staleness">1 day ago</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- Supplier Group 4 (collapsed) -->
+                    <div class="dd-group-header">
+                        <i class="bi bi-chevron-right" style="font-size:12px;color:#9ca3af;"></i>
+                        <span class="gh-supplier">Dongguan FastBolt</span>
+                        <span class="gh-count">22 lines</span>
+                        <div class="gh-progress">
+                            2 / 4 updated
+                            <div class="progress">
+                                <div class="progress-bar" style="width:50%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Supplier Group 5 (collapsed) -->
+                    <div class="dd-group-header">
+                        <i class="bi bi-chevron-right" style="font-size:12px;color:#9ca3af;"></i>
+                        <span class="gh-supplier">Ningbo SealPro</span>
+                        <span class="gh-count">18 lines</span>
+                        <div class="gh-progress">
+                            2 / 3 updated
+                            <div class="progress">
+                                <div class="progress-bar" style="width:67%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =====================================================================
+     FOOTER
+     ====================================================================== -->
+<footer style="background:#1a3a5c;color:rgba(255,255,255,.5);text-align:center;padding:24px;font-size:12px;">
+    PO Timeline &amp; Batch Tracker &mdash; Design Direction Showcase &mdash; Generated 2026-02-12
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Highlight active showcase nav link on scroll
+    (function() {
+        const sections = document.querySelectorAll('.direction-section');
+        const navLinks = document.querySelectorAll('.showcase-nav .nav-link');
+        const navHeight = document.querySelector('.showcase-nav').offsetHeight;
+
+        function updateActiveNav() {
+            let current = '';
+            sections.forEach(function(section) {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= navHeight + 80) {
+                    current = section.id;
+                }
+            });
+            navLinks.forEach(function(link) {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+        updateActiveNav();
+
+        // Smooth scroll offset for sticky nav
+        navLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').slice(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    const offset = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                    window.scrollTo({ top: offset, behavior: 'smooth' });
+                }
+            });
+        });
+    })();
+</script>
+</body>
+</html>
