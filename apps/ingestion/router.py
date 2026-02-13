@@ -1,12 +1,13 @@
 class DatabaseRouter:
     """Route ERP read models to erp DB and prevent write/migrate/relation actions."""
 
-    ERP_APP_LABELS = {"ingestion", "erp"}
+    ERP_APP_LABELS = {"erp"}
 
     def _is_erp_model(self, model) -> bool:
         meta = getattr(model, "_meta", None)
         app_label = getattr(meta, "app_label", "")
-        return app_label in self.ERP_APP_LABELS or bool(getattr(meta, "erp_managed", False))
+        # erp_managed is a class-level attribute on ERPTableBase subclasses, not a Meta option.
+        return app_label in self.ERP_APP_LABELS or bool(getattr(model, "erp_managed", False))
 
     def db_for_read(self, model, **hints):
         if self._is_erp_model(model):
@@ -24,8 +25,11 @@ class DatabaseRouter:
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
+        model = hints.get("model")
         if db == "erp":
             return False
         if app_label in self.ERP_APP_LABELS:
+            return False
+        if model is not None and self._is_erp_model(model):
             return False
         return None

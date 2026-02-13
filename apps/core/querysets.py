@@ -1,5 +1,7 @@
 from django.db import models
 
+_UNSCOPED_ROLES = frozenset({"planner", "admin"})
+
 
 def scope_queryset_for_user(queryset, user, supplier_field: str = "supplier"):
     if user is None or not getattr(user, "is_authenticated", False):
@@ -12,7 +14,11 @@ def scope_queryset_for_user(queryset, user, supplier_field: str = "supplier"):
             return queryset.none()
         return queryset.filter(**{f"{supplier_field}_id": supplier_id})
 
-    return queryset
+    if role in _UNSCOPED_ROLES:
+        return queryset
+
+    # Unknown or null role: deny access by default (least-privilege)
+    return queryset.none()
 
 
 class ScopedQuerySet(models.QuerySet):

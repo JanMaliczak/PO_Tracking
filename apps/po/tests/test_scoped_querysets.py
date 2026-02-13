@@ -38,6 +38,15 @@ class ScopedQueryContractTests(SimpleTestCase):
         queryset.filter.assert_not_called()
         queryset.none.assert_not_called()
 
+    def test_unknown_role_returns_none_queryset(self):
+        queryset = Mock()
+        queryset.none.return_value = "NONE"
+
+        for bad_role in (None, "", "guest", "superuser"):
+            user = SimpleNamespace(is_authenticated=True, role=bad_role)
+            result = scope_queryset_for_user(queryset, user)
+            self.assertEqual(result, "NONE", msg=f"Expected none queryset for role={bad_role!r}")
+
     def test_scoped_manager_for_user_delegates_to_queryset_method(self):
         manager = ScopedManager()
         manager.supplier_field = "supplier"

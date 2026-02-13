@@ -4,13 +4,14 @@ from apps.ingestion.router import DatabaseRouter
 
 
 class _Meta:
-    def __init__(self, app_label: str, erp_managed: bool = False):
+    def __init__(self, app_label: str):
         self.app_label = app_label
-        self.erp_managed = erp_managed
 
 
 class ERPModel:
-    _meta = _Meta("ingestion", erp_managed=True)
+    # erp_managed is a class-level attribute (not Meta) per ERPTableBase convention.
+    erp_managed = True
+    _meta = _Meta("ingestion")
 
 
 class LocalModel:
@@ -32,8 +33,11 @@ class TestDatabaseRouter(unittest.TestCase):
             self.router.db_for_write(ERPModel)
 
     def test_erp_migrations_are_blocked(self):
-        self.assertFalse(self.router.allow_migrate("erp", "ingestion"))
-        self.assertFalse(self.router.allow_migrate("default", "ingestion"))
+        self.assertFalse(self.router.allow_migrate("erp", "po"))
+        self.assertFalse(self.router.allow_migrate("default", "ingestion", model=ERPModel))
+
+    def test_non_erp_migrations_use_default_routing(self):
+        self.assertIsNone(self.router.allow_migrate("default", "ingestion"))
 
     def test_erp_relations_are_blocked(self):
         left = ERPModel()

@@ -11,7 +11,7 @@ def po_list(request):
 
 
 @login_required
-@role_required("admin", "expeditor")
+@role_required("expeditor")
 def milestone_update(request):
     return HttpResponse("Milestone update placeholder")
 

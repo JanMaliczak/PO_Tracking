@@ -46,6 +46,20 @@ class RoleRequiredDecoratorTests(TestCase):
         self.assertIn("HX-Trigger", response.headers)
         self.assertIn("Access denied", response.headers["HX-Trigger"])
 
+    def test_unauthenticated_user_redirected_to_login_by_decorator(self):
+        """role_required alone must redirect unauthenticated users to login (not 403)."""
+
+        @role_required("admin")
+        def protected_view(request):
+            return HttpResponse("ok")
+
+        request = self.factory.get("/protected/")
+        request.user = AnonymousUser()
+
+        response = protected_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
     def test_login_required_runs_before_role_check(self):
         @login_required(login_url="/accounts/login/")
         @role_required("admin")

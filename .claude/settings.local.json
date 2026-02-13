@@ -14,7 +14,10 @@
       "Bash(D:\\\\Python\\\\PO_Tracking\\\\.venv\\\\Scripts\\\\python.exe:*)",
       "Bash(cmd /c:*)",
       "WebFetch(domain:www.srihash.org)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(source:*)",
+      "Bash(python manage.py test:*)",
+      "Bash(.venv/bin/python:*)"
     ]
   }
 }

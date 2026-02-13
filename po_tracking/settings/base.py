@@ -126,3 +126,13 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 # 30-minute inactivity timeout that refreshes on each authenticated request.
 SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
+
+INGESTION_ERP_RETRY_COUNT = int(env("INGESTION_ERP_RETRY_COUNT", default=3))
+INGESTION_ERP_RETRY_BACKOFF_SECONDS = float(env("INGESTION_ERP_RETRY_BACKOFF_SECONDS", default=1.0))
+INGESTION_INACTIVE_STATUSES = tuple(
+    value.strip()
+    for value in env("INGESTION_INACTIVE_STATUSES", default="closed,cancelled,complete,completed").split(",")
+    if value.strip()
+)
+INGESTION_DEFAULT_SUPPLIER_CODE = env("INGESTION_DEFAULT_SUPPLIER_CODE", default="DEFAULT")
+INGESTION_DEFAULT_SUPPLIER_NAME = env("INGESTION_DEFAULT_SUPPLIER_NAME", default="Default Supplier")

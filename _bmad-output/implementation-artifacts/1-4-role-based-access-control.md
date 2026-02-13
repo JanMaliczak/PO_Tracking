@@ -1,6 +1,6 @@
 # Story 1.4: Role-Based Access Control
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -289,9 +289,32 @@ Codex GPT-5
 - `apps/po/tests/__init__.py`
 - `apps/po/tests/test_scoped_querysets.py`
 - `po_tracking/urls.py`
+- `po_tracking/settings/base.py`
 - `_bmad-output/implementation-artifacts/1-4-role-based-access-control.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Senior Developer Review (AI)
+
+**Reviewer:** J.maliczak · **Date:** 2026-02-13 · **Outcome:** Approved (fixes applied)
+
+**Issues resolved during review:**
+
+| # | Severity | Finding | Fix applied |
+|---|----------|---------|-------------|
+| H1 | HIGH | `scope_queryset_for_user` returned unfiltered data for unknown/null roles — any role other than `expeditor` silently got full access | Added `_UNSCOPED_ROLES = frozenset({"planner", "admin"})` whitelist; unknown/null roles now return `queryset.none()`. Test added: `test_unknown_role_returns_none_queryset`. |
+| H2 | HIGH | `role_required` returned HTTP 403 for unauthenticated users, mixing authentication and authorization concerns contrary to stated architecture | Changed to use `redirect_to_login(request.get_full_path())` for unauthenticated users. Test added: `test_unauthenticated_user_redirected_to_login_by_decorator`. Added docstring documenting required `@login_required` + `@role_required` stacking pattern. |
+| H3 | HIGH | `milestone_update` view allowed `admin` role; AC 3 specifies milestone recording as an "expeditor-only action" | Changed decorator to `@role_required("expeditor")`. Test added: `test_admin_cannot_update_milestone`. |
+| M1 | MEDIUM | `po_tracking/settings/base.py` modified in commit but absent from File List | Added to File List. |
+| M2 | MEDIUM | No URL manipulation test (AC 3 uncovered) | Added `test_expeditor_direct_url_access_to_admin_portal_is_blocked`. |
+| M3 | MEDIUM | No test for unauthenticated HTMX request behavior | Added `test_unauthenticated_htmx_access_to_protected_endpoint_redirects` (documents 302 behavior). |
+| M5 | MEDIUM | No test for unauthenticated non-HTMX redirect | Added `test_unauthenticated_access_to_protected_endpoint_redirects_to_login`. |
+
+**Outstanding notes (process, not code):**
+- M4: Commit `c838143` bundles stories 1.2, 1.3, and 1.4 in a single commit — commits for individual stories should be kept separate in future sprints to enable clean bisection.
+
+**Test results post-fix:** 42/42 passed (apps.core, apps.accounts, apps.po, apps.admin_portal). One pre-existing failure in `apps.ingestion.tests.test_models` is unrelated Story 2.1 debt (`erp_managed` invalid Meta attribute).
 
 ## Change Log
 
 - 2026-02-13: Implemented Story 1.4 RBAC foundation (decorators, scoped query contract, protected endpoint placeholders, endpoint/HTMX authorization behavior tests) and validated via full regression suite. Story status set to `review`.
+- 2026-02-13: Senior Developer review — 3 HIGH and 4 MEDIUM issues fixed. 5 new tests added. Story status set to `done`.
